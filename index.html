@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.6</title>
+<title>TOPIK I · 2級 Study v1.6.1</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -507,7 +507,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.6は間違いノートを下部メニューから直接開けるようにした共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.6.1は下部メニューの並びを単語優先に調整した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -708,10 +708,10 @@ main{
 
 <nav class="bottom-nav" aria-label="メインメニュー">
   <button data-view="home" class="active"><span>🏠</span>ホーム</button>
+  <button data-view="wordbook"><span>📖</span>単語</button>
   <button data-view="learning"><span>📚</span>学習</button>
   <button data-view="topik"><span>🎯</span>TOPIK</button>
   <button data-view="review"><span>📝</span>ミス</button>
-  <button data-view="wordbook"><span>📖</span>単語</button>
   <button data-view="stats"><span>📊</span>記録</button>
 </nav>
 
@@ -1763,7 +1763,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=160",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=161",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
