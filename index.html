@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v0.5</title>
+<title>TOPIK I · 2級 Study v0.5.1</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -417,7 +417,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v0.5はiPhone Safari専用のモバイルファーストUIに再設計した学習版です。実際のTOPIK問題を転載したものではありません。
+    ※ v0.5.1はiPhone下部メニューのタップ不具合を修正した学習版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -535,6 +535,15 @@ main{
 </section>
 </main>
 </div>
+
+
+<nav class="bottom-nav" aria-label="メインメニュー">
+  <button data-view="home" class="active"><span>🏠</span>ホーム</button>
+  <button data-view="learning"><span>📚</span>学習</button>
+  <button data-view="topik"><span>🎯</span>TOPIK</button>
+  <button data-view="wordbook"><span>⭐</span>単語帳</button>
+  <button data-view="stats"><span>📊</span>記録</button>
+</nav>
 
 <script>
 const data={
@@ -1093,6 +1102,10 @@ function renderStats(){
 }
 
 document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
+document.addEventListener("click",(e)=>{
+  const btn=e.target.closest(".bottom-nav [data-view]");
+  if(btn) showView(btn.dataset.view);
+});
 document.querySelectorAll("[data-start]").forEach(el=>el.onclick=()=>showView(el.dataset.start));
 document.getElementById("dailyStudyBtn").onclick=()=>{showViewDirectQuiz();startDailyStudy()};
 document.getElementById("mockStartCard").onclick=startMockExam;
@@ -1146,18 +1159,11 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=051",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
 
-<nav class="bottom-nav" aria-label="メインメニュー">
-  <button data-view="home" class="active"><span>🏠</span>ホーム</button>
-  <button data-view="learning"><span>📚</span>学習</button>
-  <button data-view="topik"><span>🎯</span>TOPIK</button>
-  <button data-view="wordbook"><span>⭐</span>単語帳</button>
-  <button data-view="stats"><span>📊</span>記録</button>
-</nav>
 
 </body>
 </html>
