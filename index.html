@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.8</title>
+<title>TOPIK I · 2級 Study v1.8.1</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -546,7 +546,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.8はTOPIK I 2級の1500語目標と段階別進捗を追加した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.8.1は新規単語の学習間隔を1分・6分・10分・4日に調整した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -715,7 +715,7 @@ main{
         </div>
         <div class="srs-ratings">
           <button class="srs-rate again" data-srs-rate="again">もう一度<span id="srsAgainWhen">1分</span></button>
-          <button class="srs-rate" data-srs-rate="hard">難しい<span id="srsHardWhen">10分</span></button>
+          <button class="srs-rate" data-srs-rate="hard">難しい<span id="srsHardWhen">6分</span></button>
           <button class="srs-rate good" data-srs-rate="good">できた<span id="srsGoodWhen">10分</span></button>
           <button class="srs-rate" data-srs-rate="easy">簡単<span id="srsEasyWhen">4日</span></button>
         </div>
@@ -1514,7 +1514,7 @@ function srsInfo(card){
   if(!card||status==="new"||status==="learning"){
     return {
       again:{minutes:1},
-      hard:{minutes:10},
+      hard:{minutes:6},
       good:step>=1?{days:1}:{minutes:10},
       easy:{days:4}
     };
@@ -1751,7 +1751,7 @@ function rateVocabCard(rating){
       shouldRequeue=true;requeueDistance=3;
     }else if(rating==="hard"){
       difficulty=clamp(difficulty+0.25,1,10);
-      status="learning";learningStep=1;interval=0;dueAt=now+10*60000;
+      status="learning";learningStep=1;interval=0;dueAt=now+6*60000;
       shouldRequeue=true;requeueDistance=4;
     }else if(rating==="good"){
       if(learningStep>=1){
@@ -2085,7 +2085,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=180",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=181",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
