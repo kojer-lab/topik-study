@@ -1830,6 +1830,11 @@ function renderWordbook(){
   }
   rows.forEach(w=>{
     const saved=savedSet.has(w.word);
+    const state=s.vocabSrs?.[w.id];
+    const badges=[];
+    if(state?.suspended)badges.push('<span class="srs-badge suspended">⏸ 保留</span>');
+    if(state?.manualMastered||state?.status==="mastered")badges.push('<span class="srs-badge mastered">✓ 定着</span>');
+    if(isVocabDifficult(state))badges.push('<span class="srs-badge difficult">🔥 苦手</span>');
     const div=document.createElement("div");
     div.className="card vocab-card";
     div.innerHTML=`
@@ -1838,6 +1843,7 @@ function renderWordbook(){
           <div class="vocab-word">${esc(w.word)}</div>
           <div class="vocab-meaning">${esc(w.meaning)}</div>
           <div class="vocab-pron">発音メモ [${esc(w.pron)}]</div>
+          <div class="srs-list-meta">${badges.join("")}</div>
         </div>
         <button class="star-btn ${saved?"saved":""}" data-vstar="${esc(w.id)}" aria-label="保存">${saved?"⭐":"☆"}</button>
       </div>
@@ -1848,6 +1854,7 @@ function renderWordbook(){
       <div class="vocab-actions">
         <button class="secondary" data-vspeak-word="${esc(w.id)}">🔊 単語</button>
         <button class="secondary" data-vspeak-sentence="${esc(w.id)}">🔊 例文</button>
+        ${state?.suspended||state?.manualMastered?'<button class="secondary" data-vresume="'+esc(w.id)+'">↩ 復習へ戻す</button>':""}
       </div>`;
     box.appendChild(div);
   });
@@ -1862,6 +1869,7 @@ function renderWordbook(){
   box.querySelectorAll("[data-vspeak-sentence]").forEach(btn=>btn.onclick=()=>{
     const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence);if(w)speakKorean(w.sentence,0.86);
   });
+  box.querySelectorAll("[data-vresume]").forEach(btn=>btn.onclick=()=>resumeVocabCard(btn.dataset.vresume));
 }
 
 function renderStats(){
@@ -1875,6 +1883,17 @@ function renderStats(){
     const p=v.solved?Math.round(v.correct/v.solved*100):0;
     return `<div class="card type-stat"><div class="label">${labels[k]}</div><strong>${p}%</strong><div class="label" style="margin-top:6px">${v.correct}/${v.solved} 正解</div></div>`;
   }).join("");
+  const catalog=vocabCatalog(),states=s.vocabSrs||{};
+  const unseen=catalog.filter(w=>!states[w.id]).length;
+  const learning=catalog.filter(w=>states[w.id]?.status==="learning").length;
+  const review=catalog.filter(w=>states[w.id]?.status==="review").length;
+  const mastered=catalog.filter(w=>states[w.id]?.status==="mastered"||states[w.id]?.manualMastered).length;
+  const difficult=catalog.filter(w=>isVocabDifficult(states[w.id])).length;
+  const suspended=catalog.filter(w=>states[w.id]?.suspended).length;
+  document.getElementById("vocabSrsRecord").innerHTML=[
+    ["未学習",unseen],["学習中",learning],["復習",review],
+    ["定着",mastered],["苦手",difficult],["保留",suspended]
+  ].map(x=>'<div class="card"><strong>'+x[1]+'</strong><span>'+x[0]+'</span></div>').join("");
 }
 
 document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
@@ -1908,6 +1927,8 @@ document.getElementById("srsReveal").onclick=revealVocabAnswer;
 document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
 document.getElementById("srsSpeakWord").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
 document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,0.86)};
+document.getElementById("srsSuspend").onclick=suspendVocabCurrent;
+document.getElementById("srsMaster").onclick=masterVocabCurrent;
 document.querySelectorAll("[data-srs-rate]").forEach(btn=>btn.onclick=()=>rateVocabCard(btn.dataset.srsRate));
 
 document.getElementById("vocabSearch").addEventListener("input",renderWordbook);
