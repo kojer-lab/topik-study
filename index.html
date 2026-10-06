@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.2</title>
+<title>TOPIK I · 2級 Study v1.3</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -446,7 +446,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.2は毎日固定の15問・学習進捗・80語＋例文の単語タブを追加した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.3は単語タブを300語＋例文300文に拡張した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -544,12 +544,12 @@ main{
 
 <section id="wordbookView" class="hidden">
   <div class="topbar">
-    <div><h1>単語</h1><div class="sub">TOPIK I 基礎80語。単語だけでなく、短い例文と日本語訳も一緒に覚えます。</div></div>
+    <div><h1>単語</h1><div class="sub">TOPIK I 基礎300語。単語だけでなく、短い例文と日本語訳も一緒に覚えます。</div></div>
   </div>
   <div class="vocab-tools">
     <input id="vocabSearch" class="vocab-search" type="search" placeholder="韓国語・日本語で検索" autocomplete="off">
     <div class="vocab-filter">
-      <button id="vocabAllBtn" class="active">すべて 80</button>
+      <button id="vocabAllBtn" class="active">すべて</button>
       <button id="vocabSavedBtn">⭐ 保存済み</button>
     </div>
   </div>
@@ -591,7 +591,7 @@ main{
 </nav>
 
 <script src="./questions-extra.js?v=110"></script>
-<script src="./vocab-catalog.js?v=120"></script>
+<script src="./vocab-catalog.js?v=130"></script>
 <script>
 const data={
 vocab:[
@@ -1286,6 +1286,7 @@ function renderWordbook(){
     return [w.word,w.meaning,w.sentence,w.sentenceJp].some(x=>String(x).toLowerCase().includes(q));
   });
   document.getElementById("vocabAllBtn").classList.toggle("active",vocabFilter==="all");
+  document.getElementById("vocabAllBtn").textContent=`すべて ${catalog.length}`;
   document.getElementById("vocabSavedBtn").classList.toggle("active",vocabFilter==="saved");
   document.getElementById("vocabSavedBtn").textContent=`⭐ 保存済み ${savedSet.size}`;
   document.getElementById("vocabCount").textContent=`${rows.length}語を表示中 · 単語をタップするだけでなく、例文ごと声に出して覚えましょう。`;
@@ -1448,7 +1449,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=120",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=130",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
