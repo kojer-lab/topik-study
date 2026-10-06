@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.6.1</title>
+<title>TOPIK I · 2級 Study v1.7</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -221,7 +221,7 @@ h1{font-size:30px;margin:0}
 }
 .srs-dashboard-title{font-size:20px;font-weight:900;margin-bottom:5px}
 .srs-dashboard-sub{color:var(--muted);font-size:13px;line-height:1.6}
-.srs-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.srs-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
 .srs-stat{
   text-align:center;padding:11px 6px;border:1px solid var(--line);border-radius:13px;
   background:var(--panel)
@@ -268,6 +268,31 @@ h1{font-size:30px;margin:0}
 .srs-rate span{display:block;margin-top:4px;color:var(--muted);font-size:10px;font-weight:700}
 .srs-rate.again{border-color:color-mix(in srgb,var(--bad) 55%,var(--line));color:var(--bad)}
 .srs-rate.good{border-color:color-mix(in srgb,var(--good) 55%,var(--line));color:var(--good)}
+
+.srs-card-meta{min-height:24px;margin-top:8px;font-size:12px;color:var(--muted);font-weight:800}
+.srs-card-meta .danger{color:var(--bad)}
+.srs-manage{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px}
+.srs-manage button{min-height:42px}
+.srs-insights{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:12px}
+.srs-insight{padding:11px 7px;border-radius:12px;border:1px solid var(--line);background:var(--panel);text-align:center}
+.srs-insight strong{display:block;font-size:19px}
+.srs-insight span{display:block;margin-top:4px;color:var(--muted);font-size:10px}
+.srs-calendar-title{font-size:12px;font-weight:900;margin:15px 0 7px}
+.srs-calendar{display:grid;grid-template-columns:repeat(7,1fr);gap:5px}
+.srs-day{border:1px solid var(--line);border-radius:9px;padding:7px 2px;text-align:center;background:var(--panel)}
+.srs-day strong{display:block;font-size:11px}
+.srs-day span{display:block;font-size:9px;color:var(--muted);margin-top:3px}
+.srs-day.active{background:var(--accent2);border-color:var(--accent)}
+.srs-badge{display:inline-flex;align-items:center;padding:3px 7px;border-radius:999px;background:var(--accent2);color:var(--accent);font-size:10px;font-weight:900;margin-right:4px}
+.srs-badge.difficult{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--panel))}
+.srs-badge.suspended{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,var(--panel))}
+.srs-badge.mastered{color:var(--good);background:color-mix(in srgb,var(--good) 10%,var(--panel))}
+.srs-list-meta{margin-top:8px;min-height:20px}
+.srs-record-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+.srs-record-grid .card{text-align:center}
+.srs-record-grid strong{display:block;font-size:23px}
+.srs-record-grid span{display:block;margin-top:5px;color:var(--muted);font-size:11px}
+
 .srs-finished{text-align:center;padding:28px 18px}
 .srs-finished .big{font-size:28px;font-weight:900;margin-bottom:8px}
 @media(max-width:390px){
@@ -507,7 +532,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.6.1は下部メニューの並びを単語優先に調整した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.7は単語SRSに再学習・苦手管理・保留・定着・学習カレンダーを追加した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -612,8 +637,9 @@ main{
     <div class="srs-dashboard-title">今日の単語復習</div>
     <div class="srs-dashboard-sub">覚えた単語は少しずつ間隔を空け、難しい単語は早めにもう一度出します。</div>
     <div class="srs-stats">
-      <div class="srs-stat"><strong id="srsDueCount">0</strong><span>今日の復習</span></div>
+      <div class="srs-stat"><strong id="srsDueCount">0</strong><span>今すぐ復習</span></div>
       <div class="srs-stat"><strong id="srsNewCount">0</strong><span>新しい単語</span></div>
+      <div class="srs-stat"><strong id="srsForecastCount">0</strong><span>今日の予定</span></div>
       <div class="srs-stat"><strong id="srsMasteredCount">0</strong><span>定着</span></div>
     </div>
     <div class="srs-setting">
@@ -627,7 +653,14 @@ main{
       </select>
     </div>
     <button class="primary" id="startVocabReview">今日の復習を始める</button>
-    <div class="srs-note" id="srsDashboardNote">新しい単語は1日最大10個。復習期限が来た単語はすべて今日のセットに入ります。</div>
+    <div class="srs-note" id="srsDashboardNote">復習期限が来た単語は自動で今日のセットに入ります。</div>
+    <div class="srs-insights">
+      <div class="srs-insight"><strong id="srsStreak">0日</strong><span>連続学習</span></div>
+      <div class="srs-insight"><strong id="srsTodayReviews">0</strong><span>今日の回答</span></div>
+      <div class="srs-insight"><strong id="srsDifficultCount">0</strong><span>苦手単語</span></div>
+    </div>
+    <div class="srs-calendar-title">直近14日の単語学習</div>
+    <div class="srs-calendar" id="srsCalendar"></div>
   </div>
 
   <div id="vocabReviewPanel" class="srs-review hidden">
@@ -637,6 +670,7 @@ main{
     </div>
     <div class="srs-card" id="srsCard">
       <div class="srs-front-word" id="srsWord"></div>
+      <div class="srs-card-meta" id="srsCardMeta"></div>
       <div class="srs-front-hint">意味を思い出してから答えを見てください。</div>
       <button class="secondary" id="srsSpeakFront" style="margin-top:14px">🔊 発音を聞く</button>
       <button class="primary srs-reveal" id="srsReveal">答えを見る</button>
@@ -653,10 +687,14 @@ main{
           <button class="secondary" id="srsSpeakSentence">🔊 例文</button>
         </div>
         <div class="srs-ratings">
-          <button class="srs-rate again" data-srs-rate="again">もう一度<span id="srsAgainWhen">10分</span></button>
-          <button class="srs-rate" data-srs-rate="hard">難しい<span id="srsHardWhen">1日</span></button>
-          <button class="srs-rate good" data-srs-rate="good">できた<span id="srsGoodWhen">3日</span></button>
-          <button class="srs-rate" data-srs-rate="easy">簡単<span id="srsEasyWhen">7日</span></button>
+          <button class="srs-rate again" data-srs-rate="again">もう一度<span id="srsAgainWhen">1分</span></button>
+          <button class="srs-rate" data-srs-rate="hard">難しい<span id="srsHardWhen">10分</span></button>
+          <button class="srs-rate good" data-srs-rate="good">できた<span id="srsGoodWhen">10分</span></button>
+          <button class="srs-rate" data-srs-rate="easy">簡単<span id="srsEasyWhen">4日</span></button>
+        </div>
+        <div class="srs-manage">
+          <button class="secondary" id="srsSuspend">⏸ 保留</button>
+          <button class="secondary" id="srsMaster">✓ 定着済みにする</button>
         </div>
       </div>
       <div id="srsFinished" class="srs-finished hidden">
@@ -690,6 +728,8 @@ main{
     <div class="card"><div class="label">間違いノート</div><div class="stat-num" id="stMistakes">0</div></div>
   </div>
   <div class="section-title">分野別</div><div id="typeStats" class="type-stats"></div>
+  <div class="section-title">単語 SRS</div>
+  <div id="vocabSrsRecord" class="srs-record-grid"></div>
   <div class="section-title">データ管理</div>
   <div class="card">
     <div style="font-weight:800;margin-bottom:6px">学習データのバックアップ</div>
@@ -834,11 +874,11 @@ const TYPE_NAMES={
 
 const STORE_KEY="topik1Level2StudyV04";
 const THEME_KEY="topik1Level2Theme";
-const STATE_SCHEMA_VERSION=5;
+const STATE_SCHEMA_VERSION=6;
 function blankState(){
   return {
     schemaVersion:STATE_SCHEMA_VERSION,
-    solved:0,correct:0,mistakes:[],favorites:[],today:{},progress:{},dailyPlans:{},vocabSrs:{},vocabSettings:{newPerDay:10},
+    solved:0,correct:0,mistakes:[],favorites:[],today:{},progress:{},dailyPlans:{},vocabSrs:{},vocabSettings:{newPerDay:10},vocabReviewLog:[],
     byType:{
       vocab:{solved:0,correct:0},
       grammar:{solved:0,correct:0},
@@ -874,6 +914,7 @@ function normalizeState(s){
   const allowedNewCounts=[5,10,15,20,30];
   const requestedNewCount=Number(s.vocabSettings?.newPerDay??10);
   b.vocabSettings={newPerDay:allowedNewCounts.includes(requestedNewCount)?requestedNewCount:10};
+  b.vocabReviewLog=Array.isArray(s.vocabReviewLog)?s.vocabReviewLog.slice(-3000):[];
   b.mockHistory=Array.isArray(s.mockHistory)?s.mockHistory:[];
   for(const k of Object.keys(b.byType)){
     b.byType[k]=Object.assign(b.byType[k],(s.byType||{})[k]||{});
@@ -1763,7 +1804,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=161",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=170",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
