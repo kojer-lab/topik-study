@@ -639,6 +639,11 @@ main{
           <button class="srs-rate" data-srs-rate="easy">簡単<span id="srsEasyWhen">7日</span></button>
         </div>
       </div>
+      <div id="srsFinished" class="srs-finished hidden">
+        <div class="big">今日の単語、完了！</div>
+        <div class="sub">復習のタイミングは自動で保存されました。</div>
+        <button class="primary" id="srsFinishBtn" style="margin-top:20px;width:100%">単語一覧に戻る</button>
+      </div>
     </div>
   </div>
 
@@ -1444,16 +1449,19 @@ function showNextVocabCard(){
   if(!vocabReviewQueue.length){
     vocabReviewCurrent=null;
     document.getElementById("srsReviewProgress").textContent=`${vocabReviewDone} / ${vocabReviewTotal}`;
-    document.getElementById("srsCard").innerHTML=`
-      <div class="srs-finished">
-        <div class="big">今日の単語、完了！</div>
-        <div class="sub">復習のタイミングは自動で保存されました。</div>
-        <button class="primary" id="srsFinishBtn" style="margin-top:20px;width:100%">単語一覧に戻る</button>
-      </div>`;
-    document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
+    document.getElementById("srsWord").classList.add("hidden");
+    document.querySelector(".srs-front-hint").classList.add("hidden");
+    document.getElementById("srsSpeakFront").classList.add("hidden");
+    document.getElementById("srsReveal").classList.add("hidden");
+    document.getElementById("srsBack").classList.add("hidden");
+    document.getElementById("srsFinished").classList.remove("hidden");
     return;
   }
   vocabReviewCurrent=vocabReviewQueue[0];
+  document.getElementById("srsFinished").classList.add("hidden");
+  document.getElementById("srsWord").classList.remove("hidden");
+  document.querySelector(".srs-front-hint").classList.remove("hidden");
+  document.getElementById("srsSpeakFront").classList.remove("hidden");
   const w=vocabReviewCurrent;
   const s=store.get(),card=s.vocabSrs[w.id];
   const ints=srsInfo(card);
@@ -1611,6 +1619,7 @@ document.querySelectorAll("[data-mini]").forEach(btn=>{
 
 document.getElementById("startVocabReview").onclick=startVocabSrs;
 document.getElementById("exitVocabReview").onclick=exitVocabSrs;
+document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
 document.getElementById("srsReveal").onclick=revealVocabAnswer;
 document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
 document.getElementById("srsSpeakWord").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
