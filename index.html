@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.7</title>
+<title>TOPIK I · 2級 Study v1.8</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -220,6 +220,20 @@ h1{font-size:30px;margin:0}
   background:linear-gradient(135deg,var(--accent2),var(--panel))
 }
 .srs-dashboard-title{font-size:20px;font-weight:900;margin-bottom:5px}
+.vocab-goal{margin:13px 0 4px;padding:13px;border:1px solid var(--line);border-radius:14px;background:var(--panel)}
+.vocab-goal-head{display:flex;align-items:end;justify-content:space-between;gap:10px}
+.vocab-goal-head strong{font-size:18px}
+.vocab-goal-head span{font-size:12px;color:var(--muted)}
+.vocab-goal-track{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:10px}
+.vocab-goal-fill{height:100%;background:var(--accent);border-radius:999px;transition:width .25s ease}
+.vocab-stages{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:10px}
+.vocab-stage{padding:9px 5px;border:1px solid var(--line);border-radius:11px;text-align:center;background:var(--panel)}
+.vocab-stage strong{display:block;font-size:12px}
+.vocab-stage span{display:block;margin-top:4px;font-size:9px;color:var(--muted)}
+.vocab-stage.active{border-color:var(--accent);background:var(--accent2)}
+.vocab-bank-note{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.55}
+.vocab-tier-badge{display:inline-flex;margin-top:6px;padding:3px 7px;border-radius:999px;background:var(--accent2);color:var(--accent);font-size:10px;font-weight:900}
+
 .srs-dashboard-sub{color:var(--muted);font-size:13px;line-height:1.6}
 .srs-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
 .srs-stat{
@@ -532,7 +546,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.7は単語SRSに再学習・苦手管理・保留・定着・学習カレンダーを追加した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.8はTOPIK I 2級の1500語目標と段階別進捗を追加した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -630,12 +644,25 @@ main{
 
 <section id="wordbookView" class="hidden">
   <div class="topbar">
-    <div><h1>単語</h1><div class="sub">TOPIK I 基礎300語。新しい単語数を自分で決めて、復習予定の単語と一緒に間隔反復で覚えます。</div></div>
+    <div><h1>単語</h1><div class="sub">TOPIK I 2級の実戦目標は1,500語。現在の単語銀行を段階的に増やしながら、SRSで定着させます。</div></div>
   </div>
 
   <div id="vocabDashboard" class="srs-dashboard">
     <div class="srs-dashboard-title">今日の単語復習</div>
     <div class="srs-dashboard-sub">覚えた単語は少しずつ間隔を空け、難しい単語は早めにもう一度出します。</div>
+    <div class="vocab-goal">
+      <div class="vocab-goal-head">
+        <strong id="vocabGoalText">0 / 1,500語</strong>
+        <span>2級 実戦目標</span>
+      </div>
+      <div class="vocab-goal-track"><div class="vocab-goal-fill" id="vocabGoalFill" style="width:0%"></div></div>
+      <div class="vocab-stages">
+        <div class="vocab-stage" id="vocabStage300"><strong>CORE 300</strong><span>核心</span></div>
+        <div class="vocab-stage" id="vocabStage800"><strong>800</strong><span>必修</span></div>
+        <div class="vocab-stage" id="vocabStage1500"><strong>1,500</strong><span>2級目標</span></div>
+      </div>
+      <div class="vocab-bank-note" id="vocabBankNote"></div>
+    </div>
     <div class="srs-stats">
       <div class="srs-stat"><strong id="srsDueCount">0</strong><span>今すぐ復習</span></div>
       <div class="srs-stat"><strong id="srsNewCount">0</strong><span>新しい単語</span></div>
@@ -1441,6 +1468,32 @@ let vocabReviewQueue=[],vocabReviewDone=0,vocabReviewTotal=0,vocabReviewCurrent=
 function vocabCatalog(){
   return Array.isArray(window.VOCAB_CATALOG)?window.VOCAB_CATALOG:[];
 }
+const VOCAB_TARGET=1500;
+function vocabNumber(w){
+  return Number(String(w?.id||"").replace(/\D/g,""))||0;
+}
+function vocabTier(w){
+  const n=vocabNumber(w);
+  if(n<=300)return {key:"core",label:"CORE 300",max:300};
+  if(n<=800)return {key:"essential",label:"必修 800",max:800};
+  return {key:"level2",label:"2級 1,500",max:1500};
+}
+function learnedVocabCount(){
+  const s=store.get();
+  return vocabCatalog().filter(w=>!!s.vocabSrs?.[w.id]).length;
+}
+function renderVocabGoal(){
+  const catalog=vocabCatalog(),learned=learnedVocabCount();
+  const pct=Math.min(100,learned/VOCAB_TARGET*100);
+  document.getElementById("vocabGoalText").textContent=learned.toLocaleString("ja-JP")+" / "+VOCAB_TARGET.toLocaleString("ja-JP")+"語";
+  document.getElementById("vocabGoalFill").style.width=pct+"%";
+  const current=learned<300?"core":learned<800?"essential":"level2";
+  document.getElementById("vocabStage300").classList.toggle("active",current==="core");
+  document.getElementById("vocabStage800").classList.toggle("active",current==="essential");
+  document.getElementById("vocabStage1500").classList.toggle("active",current==="level2");
+  document.getElementById("vocabBankNote").textContent=
+    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 追加データは既存の学習記録を残したまま拡張されます。";
+}
 function getVocabNewPerDay(){
   return Number(store.get().vocabSettings?.newPerDay||10);
 }
@@ -1556,6 +1609,7 @@ function getVocabSrsSummary(){
 
 
 function renderVocabDashboard(){
+  renderVocabGoal();
   const x=getVocabSrsSummary();
   document.getElementById("srsDueCount").textContent=x.dueCount;
   document.getElementById("srsNewCount").textContent=x.newCount;
@@ -1582,7 +1636,18 @@ function buildVocabReviewQueue(){
     .sort((a,b)=>Number(states[a.id].dueAt||0)-Number(states[b.id].dueAt||0));
   const introducedToday=catalog.filter(w=>states[w.id]?.firstSeenDay===day).length;
   const allowance=Math.max(0,getVocabNewPerDay()-introducedToday);
-  const unseen=seededShuffle(catalog.filter(w=>!states[w.id]),day+"-vocab-srs").slice(0,allowance);
+  const unseenPool=catalog.filter(w=>!states[w.id]).sort((a,b)=>vocabNumber(a)-vocabNumber(b));
+  let unseen=[];
+  for(const max of [300,800,1500]){
+    if(unseen.length>=allowance)break;
+    const tierPool=unseenPool.filter(w=>{
+      const n=vocabNumber(w);
+      const min=max===300?1:max===800?301:801;
+      return n>=min&&n<=max;
+    });
+    const need=allowance-unseen.length;
+    unseen.push(...seededShuffle(tierPool,day+"-vocab-srs-"+max).slice(0,need));
+  }
   return [...due,...unseen];
 }
 function startVocabSrs(){
@@ -1845,6 +1910,7 @@ function renderWordbook(){
           <div class="vocab-word">${esc(w.word)}</div>
           <div class="vocab-meaning">${esc(w.meaning)}</div>
           <div class="vocab-pron">発音メモ [${esc(w.pron)}]</div>
+          <div class="vocab-tier-badge">${esc(vocabTier(w).label)}</div>
           <div class="srs-list-meta">${badges.join("")}</div>
         </div>
         <button class="star-btn ${saved?"saved":""}" data-vstar="${esc(w.id)}" aria-label="保存">${saved?"⭐":"☆"}</button>
@@ -1893,9 +1959,10 @@ function renderStats(){
   const difficult=catalog.filter(w=>isVocabDifficult(states[w.id])).length;
   const suspended=catalog.filter(w=>states[w.id]?.suspended).length;
   document.getElementById("vocabSrsRecord").innerHTML=[
-    ["未学習",unseen],["学習中",learning],["復習",review],
+    ["学習開始",catalog.length-unseen],["目標",VOCAB_TARGET],
+    ["学習中",learning],["復習",review],
     ["定着",mastered],["苦手",difficult],["保留",suspended]
-  ].map(x=>'<div class="card"><strong>'+x[1]+'</strong><span>'+x[0]+'</span></div>').join("");
+  ].map(x=>'<div class="card"><strong>'+x[1].toLocaleString("ja-JP")+'</strong><span>'+x[0]+'</span></div>').join("");
 }
 
 document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
@@ -2018,7 +2085,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=170",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=180",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
