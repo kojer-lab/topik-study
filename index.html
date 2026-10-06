@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.0</title>
+<title>TOPIK I · 2級 Study v1.1</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -397,7 +397,7 @@ main{
       <div class="sub">TOPIK II（3〜6級）ではなく、TOPIK Iの2級を想定した初級学習版です。</div>
       <ul class="feature-list">
         <li>問題・指示・選択肢は韓国語中心</li><li>日本語ヒントは学習モードのみ表示</li>
-        <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li>
+        <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li><li><strong>全300問</strong>のオリジナル問題銀行</li>
         <li>韓国語TTSによる聴解練習</li>
         <li>回答後に台本・日本語訳を表示</li>
         <li>単語をタップすると意味・発音メモを表示</li>
@@ -417,7 +417,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.0はTOPIK I向けの読解・聴解問題を大幅追加し、模擬試験を聴解＋読解構成にした初版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.1は全300問のオリジナル問題銀行を搭載した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -554,6 +554,7 @@ main{
   <button data-view="stats"><span>📊</span>記録</button>
 </nav>
 
+<script src="./questions-extra.js?v=110"></script>
 <script>
 const data={
 vocab:[
@@ -641,6 +642,14 @@ listening:[
  {"audio":"남자: 새로 이사한 집은 어때요?\n여자: 역에서 조금 멀지만 조용하고 방도 넓어서 마음에 들어요.","q":"여자는 새 집을 어떻게 생각합니까?","c":["역에서 가까워서 좋습니다","조용하고 넓어서 마음에 듭니다","방이 작아서 불편합니다","너무 시끄러워서 싫습니다"],"a":1,"h":"新しい家に対する女性の評価です。","e":"駅から少し遠いものの『조용하고 방도 넓어서 마음에 들어요』と言っています。","jp":"男：新しく引っ越した家はどうですか？\n女：駅から少し遠いですが、静かで部屋も広いので気に入っています。","v":[["이사하다","引っ越す","이사하다"],["마음에 들다","気に入る","마으메 들다"]]}
 ]
 };
+
+if(window.EXTRA_QUESTIONS){
+  for(const type of ["vocab","grammar","reading","listening"]){
+    if(Array.isArray(window.EXTRA_QUESTIONS[type])){
+      data[type].push(...window.EXTRA_QUESTIONS[type]);
+    }
+  }
+}
 
 // Stable problem IDs. Existing question order must not be changed; new questions are appended.
 const PROBLEM_PREFIX={vocab:"V",grammar:"G",reading:"R",listening:"L"};
@@ -1290,7 +1299,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=100",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=110",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
