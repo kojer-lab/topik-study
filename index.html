@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.5</title>
+<title>TOPIK I · 2級 Study v1.6</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -335,7 +335,7 @@ main{
 }
 .bottom-nav{
   position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:60;
-  width:min(100%,560px);display:grid;grid-template-columns:repeat(5,1fr);
+  width:min(100%,560px);display:grid;grid-template-columns:repeat(6,1fr);
   background:color-mix(in srgb,var(--panel) 94%, transparent);
   backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
   border-top:1px solid var(--line);
@@ -343,10 +343,10 @@ main{
 }
 .bottom-nav button{
   border:0;background:transparent;color:var(--muted);min-height:54px;
-  border-radius:12px;font-size:11px;font-weight:700;cursor:pointer;
+  border-radius:11px;font-size:10px;font-weight:700;cursor:pointer;
   display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px
 }
-.bottom-nav button span{font-size:20px;line-height:1}
+.bottom-nav button span{font-size:19px;line-height:1}
 .bottom-nav button.active{color:var(--accent);background:var(--accent2)}
 .topbar{margin-bottom:18px}
 .topbar h1,h1{font-size:25px;letter-spacing:-.03em}
@@ -507,7 +507,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.5は1日の新規単語数設定と単語一覧のランダム表示を追加した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.6は間違いノートを下部メニューから直接開けるようにした共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -710,6 +710,7 @@ main{
   <button data-view="home" class="active"><span>🏠</span>ホーム</button>
   <button data-view="learning"><span>📚</span>学習</button>
   <button data-view="topik"><span>🎯</span>TOPIK</button>
+  <button data-view="review"><span>📝</span>ミス</button>
   <button data-view="wordbook"><span>📖</span>単語</button>
   <button data-view="stats"><span>📊</span>記録</button>
 </nav>
@@ -1762,7 +1763,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=150",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=160",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
