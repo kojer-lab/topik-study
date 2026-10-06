@@ -2,7 +2,7 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#4f46e5">
 
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.1</title>
+<title>TOPIK I · 2級 Study v1.2</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -213,6 +213,35 @@ h1{font-size:30px;margin:0}
   .mistake{flex-direction:column}
   .mistake .secondary{width:100%}
 }
+
+
+.vocab-tools{display:grid;gap:10px;margin-bottom:14px}
+.vocab-search{
+  width:100%;min-height:48px;border:1px solid var(--line);border-radius:13px;
+  background:var(--panel);color:var(--text);padding:0 14px;font:inherit;outline:none
+}
+.vocab-search:focus{border-color:var(--accent)}
+.vocab-filter{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.vocab-filter button{
+  min-height:42px;border:1px solid var(--line);border-radius:11px;
+  background:var(--panel);color:var(--muted);font-weight:800
+}
+.vocab-filter button.active{background:var(--accent2);color:var(--accent);border-color:var(--accent)}
+.vocab-card{padding:17px}
+.vocab-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.vocab-word{font-size:25px;font-weight:900;letter-spacing:-.02em}
+.vocab-meaning{margin-top:4px;font-size:15px;font-weight:700}
+.vocab-pron{margin-top:4px;color:var(--muted);font-size:12px}
+.vocab-example{
+  margin-top:14px;padding:13px;border-radius:12px;background:var(--accent2);
+  line-height:1.7
+}
+.vocab-example .ko{font-size:16px;font-weight:800;word-break:keep-all}
+.vocab-example .jp{margin-top:5px;color:var(--muted);font-size:13px}
+.vocab-actions{display:flex;gap:8px;margin-top:12px}
+.vocab-actions button{min-height:42px;flex:1}
+.vocab-count{font-size:13px;color:var(--muted);margin:2px 2px 10px}
+.daily-mix{margin-top:8px;font-size:12px;color:var(--muted)}
 
 /* ===== v0.5 iPhone / Safari mobile-first override ===== */
 html{-webkit-text-size-adjust:100%;background:var(--bg)}
@@ -417,7 +446,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.1は全300問のオリジナル問題銀行を搭載した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.2は毎日固定の15問・学習進捗・80語＋例文の単語タブを追加した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -515,9 +544,16 @@ main{
 
 <section id="wordbookView" class="hidden">
   <div class="topbar">
-    <div><h1>単語帳</h1><div class="sub">解説の ⭐ を押した単語がここに保存されます。</div></div>
-    <button class="secondary" id="clearWordbook">すべて削除</button>
+    <div><h1>単語</h1><div class="sub">TOPIK I 基礎80語。単語だけでなく、短い例文と日本語訳も一緒に覚えます。</div></div>
   </div>
+  <div class="vocab-tools">
+    <input id="vocabSearch" class="vocab-search" type="search" placeholder="韓国語・日本語で検索" autocomplete="off">
+    <div class="vocab-filter">
+      <button id="vocabAllBtn" class="active">すべて 80</button>
+      <button id="vocabSavedBtn">⭐ 保存済み</button>
+    </div>
+  </div>
+  <div id="vocabCount" class="vocab-count"></div>
   <div id="wordbookList" class="wordbook-grid"></div>
 </section>
 
@@ -550,11 +586,12 @@ main{
   <button data-view="home" class="active"><span>🏠</span>ホーム</button>
   <button data-view="learning"><span>📚</span>学習</button>
   <button data-view="topik"><span>🎯</span>TOPIK</button>
-  <button data-view="wordbook"><span>⭐</span>単語帳</button>
+  <button data-view="wordbook"><span>📖</span>単語</button>
   <button data-view="stats"><span>📊</span>記録</button>
 </nav>
 
 <script src="./questions-extra.js?v=110"></script>
+<script src="./vocab-catalog.js?v=120"></script>
 <script>
 const data={
 vocab:[
@@ -672,11 +709,11 @@ const TYPE_NAMES={
 
 const STORE_KEY="topik1Level2StudyV04";
 const THEME_KEY="topik1Level2Theme";
-const STATE_SCHEMA_VERSION=2;
+const STATE_SCHEMA_VERSION=3;
 function blankState(){
   return {
     schemaVersion:STATE_SCHEMA_VERSION,
-    solved:0,correct:0,mistakes:[],favorites:[],today:{},
+    solved:0,correct:0,mistakes:[],favorites:[],today:{},progress:{},dailyPlans:{},
     byType:{
       vocab:{solved:0,correct:0},
       grammar:{solved:0,correct:0},
@@ -706,6 +743,8 @@ function normalizeState(s){
   });
   b.favorites=Array.isArray(s.favorites)?s.favorites:[];
   b.today=s.today||{};
+  b.progress=(s.progress&&typeof s.progress==="object")?s.progress:{};
+  b.dailyPlans=(s.dailyPlans&&typeof s.dailyPlans==="object")?s.dailyPlans:{};
   b.mockHistory=Array.isArray(s.mockHistory)?s.mockHistory:[];
   for(const k of Object.keys(b.byType)){
     b.byType[k]=Object.assign(b.byType[k],(s.byType||{})[k]||{});
@@ -782,9 +821,69 @@ function makeMixedSession(counts){
   return items;
 }
 
+function hashText(str){
+  let h=2166136261;
+  for(let i=0;i<str.length;i++){h^=str.charCodeAt(i);h=Math.imul(h,16777619)}
+  return h>>>0;
+}
+function seededShuffle(items,seedText){
+  const a=[...items];let x=hashText(seedText)||1;
+  const rand=()=>{x^=x<<13;x^=x>>>17;x^=x<<5;return (x>>>0)/4294967296};
+  for(let i=a.length-1;i>0;i--){const j=Math.floor(rand()*(i+1));[a[i],a[j]]=[a[j],a[i]]}
+  return a;
+}
+function allProblemRefs(){
+  const refs=[];
+  for(const type of ["vocab","grammar","reading","listening"]){
+    data[type].forEach((item,index)=>refs.push({type,index,id:item.id}));
+  }
+  return refs;
+}
+function getDailyPlan(){
+  const day=new Date().toLocaleDateString("sv-SE");
+  const s=store.get();
+  const saved=s.dailyPlans[day];
+  if(Array.isArray(saved)&&saved.length){
+    const refs=saved.map(x=>{
+      const index=data[x.type]?.findIndex(q=>q.id===x.id)??-1;
+      return index>=0?{type:x.type,index,id:x.id}:null;
+    }).filter(Boolean);
+    if(refs.length===saved.length)return refs;
+  }
+
+  const all=allProblemRefs(),selected=[],used=new Set();
+  const add=(ref)=>{if(ref&&!used.has(ref.id)){used.add(ref.id);selected.push(ref)}};
+
+  // 1) 間違いを最大2問
+  seededShuffle(
+    s.mistakes.map(m=>all.find(r=>r.id===(m.problemId||m.id))).filter(Boolean),
+    day+"-mistakes"
+  ).slice(0,2).forEach(add);
+
+  // 2) 既習問題を最大5問（古いものを優先）
+  all.filter(r=>s.progress[r.id]&&!used.has(r.id))
+    .sort((a,b)=>(s.progress[a.id]?.last||0)-(s.progress[b.id]?.last||0))
+    .slice(0,5).forEach(add);
+
+  // 3) 未学習を中心に8問以上
+  seededShuffle(all.filter(r=>!s.progress[r.id]&&!used.has(r.id)),day+"-new")
+    .slice(0,15-selected.length).forEach(add);
+
+  // 全問学習済みでも15問になるよう補充
+  seededShuffle(all.filter(r=>!used.has(r.id)),day+"-fill")
+    .slice(0,15-selected.length).forEach(add);
+
+  const finalPlan=seededShuffle(selected.slice(0,15),day+"-mix");
+  s.dailyPlans[day]=finalPlan.map(({type,id})=>({type,id}));
+  // 古い日付を30日分だけ保持
+  const keys=Object.keys(s.dailyPlans).sort().reverse();
+  keys.slice(30).forEach(k=>delete s.dailyPlans[k]);
+  store.set(s);
+  return finalPlan;
+}
 function startDailyStudy(){
   setQuizMode("study");
-  sessionItems=makeMixedSession({vocab:4,grammar:4,reading:3,listening:4});
+  sessionItems=getDailyPlan().map(x=>({type:x.type,index:x.index}));
   sessionKind="daily";
   currentIndex=0;
   mockAnswers=[];
@@ -941,6 +1040,12 @@ function answer(idx){
   s.today[key]=(s.today[key]||0)+1;
 
   const problemId=item.id;
+  const p=s.progress[problemId]||{attempts:0,correct:0,wrong:0,streak:0,last:0};
+  p.attempts++;
+  p.last=Date.now();
+  if(isCorrect){p.correct++;p.streak=(p.streak||0)+1}else{p.wrong++;p.streak=0}
+  s.progress[problemId]=p;
+
   if(isCorrect && sessionKind==="mistakes"){
     s.mistakes=s.mistakes.filter(m=>(m.problemId||m.id)!==problemId);
   }
@@ -1024,23 +1129,26 @@ function answer(idx){
   renderHome();
 }
 
-function playCurrent(){
-  if(currentType!=="listening")return;
-  const item=data[currentType][order[currentIndex]];
+function speakKorean(text,rate=0.9){
   if(!("speechSynthesis" in window)){
-    alert("このブラウザでは音声読み上げに対応していません。Chrome / Edge / Safariなどで試してください。");
+    alert("このブラウザでは韓国語音声の読み上げに対応していません。");
     return;
   }
   window.speechSynthesis.cancel();
-  const text=item.audio.replace(/^(여자|남자):\s*/gm,"");
   speech=new SpeechSynthesisUtterance(text);
   speech.lang="ko-KR";
-  speech.rate=parseFloat(document.getElementById("speedSelect").value||"0.9");
+  speech.rate=rate;
   speech.pitch=1;
   const voices=window.speechSynthesis.getVoices();
   const ko=voices.find(v=>String(v.lang).toLowerCase().startsWith("ko"));
   if(ko)speech.voice=ko;
   window.speechSynthesis.speak(speech);
+}
+function playCurrent(){
+  if(currentType!=="listening")return;
+  const item=getCurrentRef().item;
+  const text=item.audio.replace(/^(여자|남자):\s*/gm,"");
+  speakKorean(text,parseFloat(document.getElementById("speedSelect").value||"0.9"));
 }
 
 
@@ -1158,24 +1266,67 @@ function renderMistakes(){
   });
 }
 
+let vocabFilter="all";
+function toggleFavoriteEntry(entry){
+  const s=store.get();
+  const pos=s.favorites.findIndex(x=>x.word===entry.word);
+  if(pos>=0)s.favorites.splice(pos,1);
+  else s.favorites.unshift({word:entry.word,meaning:entry.meaning,pron:entry.pron,savedAt:Date.now()});
+  store.set(s);
+}
 function renderWordbook(){
-  const s=store.get(),box=document.getElementById("wordbookList");
+  const box=document.getElementById("wordbookList");
+  const q=(document.getElementById("vocabSearch")?.value||"").trim().toLowerCase();
+  const s=store.get();
+  const savedSet=new Set(s.favorites.map(x=>x.word));
+  const catalog=Array.isArray(window.VOCAB_CATALOG)?window.VOCAB_CATALOG:[];
+  let rows=catalog.filter(w=>{
+    if(vocabFilter==="saved"&&!savedSet.has(w.word))return false;
+    if(!q)return true;
+    return [w.word,w.meaning,w.sentence,w.sentenceJp].some(x=>String(x).toLowerCase().includes(q));
+  });
+  document.getElementById("vocabAllBtn").classList.toggle("active",vocabFilter==="all");
+  document.getElementById("vocabSavedBtn").classList.toggle("active",vocabFilter==="saved");
+  document.getElementById("vocabSavedBtn").textContent=`⭐ 保存済み ${savedSet.size}`;
+  document.getElementById("vocabCount").textContent=`${rows.length}語を表示中 · 単語をタップするだけでなく、例文ごと声に出して覚えましょう。`;
   box.innerHTML="";
-  if(!s.favorites.length){
-    box.innerHTML='<div class="card empty" style="grid-column:1/-1">まだ保存した単語がありません。問題の解説で ☆ を押して追加できます。</div>';
+  if(!rows.length){
+    box.innerHTML='<div class="card empty">条件に合う単語がありません。</div>';
     return;
   }
-  s.favorites.forEach((w,i)=>{
+  rows.forEach(w=>{
+    const saved=savedSet.has(w.word);
     const div=document.createElement("div");
-    div.className="card word-card";
-    div.innerHTML=`<div style="font-size:24px;font-weight:900">${esc(w.word)}</div>
-      <div style="margin-top:8px">${esc(w.meaning)}</div>
-      <div class="label" style="margin-top:8px">発音メモ [${esc(w.pron)}]</div>
-      <button class="secondary" data-wremove="${i}" style="margin-top:14px">削除</button>`;
+    div.className="card vocab-card";
+    div.innerHTML=`
+      <div class="vocab-head">
+        <div>
+          <div class="vocab-word">${esc(w.word)}</div>
+          <div class="vocab-meaning">${esc(w.meaning)}</div>
+          <div class="vocab-pron">発音メモ [${esc(w.pron)}]</div>
+        </div>
+        <button class="star-btn ${saved?"saved":""}" data-vstar="${esc(w.id)}" aria-label="保存">${saved?"⭐":"☆"}</button>
+      </div>
+      <div class="vocab-example">
+        <div class="ko">${esc(w.sentence)}</div>
+        <div class="jp">${esc(w.sentenceJp)}</div>
+      </div>
+      <div class="vocab-actions">
+        <button class="secondary" data-vspeak-word="${esc(w.id)}">🔊 単語</button>
+        <button class="secondary" data-vspeak-sentence="${esc(w.id)}">🔊 例文</button>
+      </div>`;
     box.appendChild(div);
   });
-  box.querySelectorAll("[data-wremove]").forEach(btn=>btn.onclick=()=>{
-    const s2=store.get();s2.favorites.splice(Number(btn.dataset.wremove),1);store.set(s2);renderWordbook();
+
+  box.querySelectorAll("[data-vstar]").forEach(btn=>btn.onclick=()=>{
+    const w=catalog.find(x=>x.id===btn.dataset.vstar);if(!w)return;
+    toggleFavoriteEntry(w);renderWordbook();
+  });
+  box.querySelectorAll("[data-vspeak-word]").forEach(btn=>btn.onclick=()=>{
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakWord);if(w)speakKorean(w.word,0.82);
+  });
+  box.querySelectorAll("[data-vspeak-sentence]").forEach(btn=>btn.onclick=()=>{
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence);if(w)speakKorean(w.sentence,0.86);
   });
 }
 
@@ -1212,11 +1363,9 @@ document.querySelectorAll("[data-mini]").forEach(btn=>{
   };
 });
 
-document.getElementById("clearWordbook").onclick=()=>{
-  if(confirm("単語帳をすべて削除しますか？")){
-    const s=store.get();s.favorites=[];store.set(s);renderWordbook();
-  }
-};
+document.getElementById("vocabSearch").addEventListener("input",renderWordbook);
+document.getElementById("vocabAllBtn").onclick=()=>{vocabFilter="all";renderWordbook()};
+document.getElementById("vocabSavedBtn").onclick=()=>{vocabFilter="saved";renderWordbook()};
 document.getElementById("clearMistakes").onclick=()=>{
   if(confirm("間違いノートをすべて削除しますか？")){
     const s=store.get();s.mistakes=[];store.set(s);renderMistakes();renderHome();
@@ -1299,7 +1448,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=110",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=120",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
