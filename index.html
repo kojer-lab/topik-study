@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.3</title>
+<title>TOPIK I · 2級 Study v1.4</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -214,6 +214,57 @@ h1{font-size:30px;margin:0}
   .mistake .secondary{width:100%}
 }
 
+
+.srs-dashboard{
+  margin-bottom:16px;padding:18px;border:1px solid var(--line);border-radius:18px;
+  background:linear-gradient(135deg,var(--accent2),var(--panel))
+}
+.srs-dashboard-title{font-size:20px;font-weight:900;margin-bottom:5px}
+.srs-dashboard-sub{color:var(--muted);font-size:13px;line-height:1.6}
+.srs-stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:14px 0}
+.srs-stat{
+  text-align:center;padding:11px 6px;border:1px solid var(--line);border-radius:13px;
+  background:var(--panel)
+}
+.srs-stat strong{display:block;font-size:23px;line-height:1.1}
+.srs-stat span{display:block;margin-top:5px;color:var(--muted);font-size:11px}
+.srs-dashboard .primary{width:100%;min-height:54px;font-size:16px}
+.srs-note{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.6}
+.srs-review{display:grid;gap:12px}
+.srs-review-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.srs-progress{font-size:13px;color:var(--muted);font-weight:800}
+.srs-card{
+  min-height:330px;padding:24px 18px;border:1px solid var(--line);border-radius:20px;
+  background:var(--panel);display:flex;flex-direction:column;justify-content:center;text-align:center
+}
+.srs-front-word{font-size:38px;font-weight:900;letter-spacing:-.03em;word-break:keep-all}
+.srs-front-hint{margin-top:10px;color:var(--muted);font-size:13px}
+.srs-reveal{margin-top:24px;min-height:52px}
+.srs-back{margin-top:22px;padding-top:20px;border-top:1px solid var(--line)}
+.srs-back .meaning{font-size:20px;font-weight:900}
+.srs-back .pron{margin-top:6px;color:var(--muted);font-size:13px}
+.srs-back .example{
+  margin-top:16px;padding:14px;border-radius:14px;background:var(--accent2);text-align:left
+}
+.srs-back .example .ko{font-size:17px;font-weight:800;line-height:1.65}
+.srs-back .example .jp{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.55}
+.srs-audio{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+.srs-audio button{min-height:43px}
+.srs-ratings{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:14px}
+.srs-rate{
+  min-height:62px;border:1px solid var(--line);border-radius:12px;background:var(--panel);
+  color:var(--text);font-size:12px;font-weight:800;padding:7px 4px
+}
+.srs-rate span{display:block;margin-top:4px;color:var(--muted);font-size:10px;font-weight:700}
+.srs-rate.again{border-color:color-mix(in srgb,var(--bad) 55%,var(--line));color:var(--bad)}
+.srs-rate.good{border-color:color-mix(in srgb,var(--good) 55%,var(--line));color:var(--good)}
+.srs-finished{text-align:center;padding:28px 18px}
+.srs-finished .big{font-size:28px;font-weight:900;margin-bottom:8px}
+@media(max-width:390px){
+  .srs-stats{grid-template-columns:repeat(3,1fr)}
+  .srs-stat strong{font-size:20px}
+  .srs-ratings{grid-template-columns:repeat(2,1fr)}
+}
 
 .vocab-tools{display:grid;gap:10px;margin-bottom:14px}
 .vocab-search{
@@ -446,7 +497,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.3は単語タブを300語＋例文300文に拡張した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.4は単語300語に間隔反復（SRS）カード復習を追加した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -544,17 +595,65 @@ main{
 
 <section id="wordbookView" class="hidden">
   <div class="topbar">
-    <div><h1>単語</h1><div class="sub">TOPIK I 基礎300語。単語だけでなく、短い例文と日本語訳も一緒に覚えます。</div></div>
+    <div><h1>単語</h1><div class="sub">TOPIK I 基礎300語。毎日10個の新しい単語＋復習予定の単語を、間隔反復で覚えます。</div></div>
   </div>
-  <div class="vocab-tools">
-    <input id="vocabSearch" class="vocab-search" type="search" placeholder="韓国語・日本語で検索" autocomplete="off">
-    <div class="vocab-filter">
-      <button id="vocabAllBtn" class="active">すべて</button>
-      <button id="vocabSavedBtn">⭐ 保存済み</button>
+
+  <div id="vocabDashboard" class="srs-dashboard">
+    <div class="srs-dashboard-title">今日の単語復習</div>
+    <div class="srs-dashboard-sub">覚えた単語は少しずつ間隔を空け、難しい単語は早めにもう一度出します。</div>
+    <div class="srs-stats">
+      <div class="srs-stat"><strong id="srsDueCount">0</strong><span>今日の復習</span></div>
+      <div class="srs-stat"><strong id="srsNewCount">0</strong><span>新しい単語</span></div>
+      <div class="srs-stat"><strong id="srsMasteredCount">0</strong><span>定着</span></div>
+    </div>
+    <button class="primary" id="startVocabReview">今日の復習を始める</button>
+    <div class="srs-note" id="srsDashboardNote">新しい単語は1日最大10個。復習期限が来た単語はすべて今日のセットに入ります。</div>
+  </div>
+
+  <div id="vocabReviewPanel" class="srs-review hidden">
+    <div class="srs-review-head">
+      <button class="secondary" id="exitVocabReview">← 単語一覧</button>
+      <div class="srs-progress" id="srsReviewProgress"></div>
+    </div>
+    <div class="srs-card" id="srsCard">
+      <div class="srs-front-word" id="srsWord"></div>
+      <div class="srs-front-hint">意味を思い出してから答えを見てください。</div>
+      <button class="secondary" id="srsSpeakFront" style="margin-top:14px">🔊 発音を聞く</button>
+      <button class="primary srs-reveal" id="srsReveal">答えを見る</button>
+
+      <div class="srs-back hidden" id="srsBack">
+        <div class="meaning" id="srsMeaning"></div>
+        <div class="pron" id="srsPron"></div>
+        <div class="example">
+          <div class="ko" id="srsSentence"></div>
+          <div class="jp" id="srsSentenceJp"></div>
+        </div>
+        <div class="srs-audio">
+          <button class="secondary" id="srsSpeakWord">🔊 単語</button>
+          <button class="secondary" id="srsSpeakSentence">🔊 例文</button>
+        </div>
+        <div class="srs-ratings">
+          <button class="srs-rate again" data-srs-rate="again">もう一度<span id="srsAgainWhen">10分</span></button>
+          <button class="srs-rate" data-srs-rate="hard">難しい<span id="srsHardWhen">1日</span></button>
+          <button class="srs-rate good" data-srs-rate="good">できた<span id="srsGoodWhen">3日</span></button>
+          <button class="srs-rate" data-srs-rate="easy">簡単<span id="srsEasyWhen">7日</span></button>
+        </div>
+      </div>
     </div>
   </div>
-  <div id="vocabCount" class="vocab-count"></div>
-  <div id="wordbookList" class="wordbook-grid"></div>
+
+  <div id="vocabBrowse">
+    <div class="section-title">単語一覧</div>
+    <div class="vocab-tools">
+      <input id="vocabSearch" class="vocab-search" type="search" placeholder="韓国語・日本語で検索" autocomplete="off">
+      <div class="vocab-filter">
+        <button id="vocabAllBtn" class="active">すべて</button>
+        <button id="vocabSavedBtn">⭐ 保存済み</button>
+      </div>
+    </div>
+    <div id="vocabCount" class="vocab-count"></div>
+    <div id="wordbookList" class="wordbook-grid"></div>
+  </div>
 </section>
 
 <section id="statsView" class="hidden">
@@ -591,7 +690,7 @@ main{
 </nav>
 
 <script src="./questions-extra.js?v=110"></script>
-<script src="./vocab-catalog.js?v=130"></script>
+<script src="./vocab-catalog.js?v=140"></script>
 <script>
 const data={
 vocab:[
@@ -709,11 +808,11 @@ const TYPE_NAMES={
 
 const STORE_KEY="topik1Level2StudyV04";
 const THEME_KEY="topik1Level2Theme";
-const STATE_SCHEMA_VERSION=3;
+const STATE_SCHEMA_VERSION=4;
 function blankState(){
   return {
     schemaVersion:STATE_SCHEMA_VERSION,
-    solved:0,correct:0,mistakes:[],favorites:[],today:{},progress:{},dailyPlans:{},
+    solved:0,correct:0,mistakes:[],favorites:[],today:{},progress:{},dailyPlans:{},vocabSrs:{},
     byType:{
       vocab:{solved:0,correct:0},
       grammar:{solved:0,correct:0},
@@ -745,6 +844,7 @@ function normalizeState(s){
   b.today=s.today||{};
   b.progress=(s.progress&&typeof s.progress==="object")?s.progress:{};
   b.dailyPlans=(s.dailyPlans&&typeof s.dailyPlans==="object")?s.dailyPlans:{};
+  b.vocabSrs=(s.vocabSrs&&typeof s.vocabSrs==="object")?s.vocabSrs:{};
   b.mockHistory=Array.isArray(s.mockHistory)?s.mockHistory:[];
   for(const k of Object.keys(b.byType)){
     b.byType[k]=Object.assign(b.byType[k],(s.byType||{})[k]||{});
@@ -1266,6 +1366,147 @@ function renderMistakes(){
   });
 }
 
+let vocabReviewQueue=[],vocabReviewDone=0,vocabReviewTotal=0,vocabReviewCurrent=null;
+
+function vocabCatalog(){
+  return Array.isArray(window.VOCAB_CATALOG)?window.VOCAB_CATALOG:[];
+}
+function localDay(){
+  return new Date().toLocaleDateString("sv-SE");
+}
+function srsInfo(card){
+  const interval=Math.max(0,Number(card?.intervalDays||0));
+  const ease=Math.min(3.2,Math.max(1.3,Number(card?.ease||2.3)));
+  const hard=card&&card.reps?Math.max(1,Math.round(Math.max(1,interval)*1.2)):1;
+  const good=card&&card.reps?Math.max(hard+1,Math.round(Math.max(1,interval)*ease)):3;
+  const easy=card&&card.reps?Math.max(good+2,Math.round(Math.max(1,interval)*(ease+0.8))):7;
+  return {againMin:10,hardDays:Math.min(hard,365),goodDays:Math.min(good,365),easyDays:Math.min(easy,365)};
+}
+function fmtInterval(days,minutes=0){
+  if(minutes)return minutes+"分";
+  if(days<30)return days+"日";
+  if(days<365)return Math.round(days/30)+"か月";
+  return Math.round(days/365)+"年";
+}
+function getVocabSrsSummary(){
+  const catalog=vocabCatalog(),s=store.get(),now=Date.now(),day=localDay();
+  const states=s.vocabSrs||{};
+  const due=catalog.filter(w=>states[w.id]&&Number(states[w.id].dueAt||0)<=now);
+  const introducedToday=catalog.filter(w=>states[w.id]?.firstSeenDay===day).length;
+  const unseen=catalog.filter(w=>!states[w.id]);
+  const newCount=Math.min(Math.max(0,10-introducedToday),unseen.length);
+  const mastered=catalog.filter(w=>states[w.id]?.status==="mastered").length;
+  const learned=catalog.filter(w=>states[w.id]).length;
+  return {dueCount:due.length,newCount,mastered,learned,unseen:unseen.length};
+}
+function renderVocabDashboard(){
+  const x=getVocabSrsSummary();
+  document.getElementById("srsDueCount").textContent=x.dueCount;
+  document.getElementById("srsNewCount").textContent=x.newCount;
+  document.getElementById("srsMasteredCount").textContent=x.mastered;
+  const btn=document.getElementById("startVocabReview");
+  const total=x.dueCount+x.newCount;
+  btn.disabled=total===0;
+  btn.textContent=total?(`今日の復習を始める · ${total}枚`):"今日の学習は完了しました ✓";
+  document.getElementById("srsDashboardNote").textContent=
+    `学習開始 ${x.learned}/${vocabCatalog().length}語 · 未学習 ${x.unseen}語 · 新規は1日最大10語`;
+}
+function buildVocabReviewQueue(){
+  const catalog=vocabCatalog(),s=store.get(),now=Date.now(),day=localDay(),states=s.vocabSrs||{};
+  const due=catalog
+    .filter(w=>states[w.id]&&Number(states[w.id].dueAt||0)<=now)
+    .sort((a,b)=>Number(states[a.id].dueAt||0)-Number(states[b.id].dueAt||0));
+  const introducedToday=catalog.filter(w=>states[w.id]?.firstSeenDay===day).length;
+  const allowance=Math.max(0,10-introducedToday);
+  const unseen=seededShuffle(catalog.filter(w=>!states[w.id]),day+"-vocab-srs").slice(0,allowance);
+  return [...due,...unseen];
+}
+function startVocabSrs(){
+  vocabReviewQueue=buildVocabReviewQueue();
+  vocabReviewDone=0;
+  vocabReviewTotal=vocabReviewQueue.length;
+  if(!vocabReviewTotal){renderVocabDashboard();return}
+  document.getElementById("vocabDashboard").classList.add("hidden");
+  document.getElementById("vocabBrowse").classList.add("hidden");
+  document.getElementById("vocabReviewPanel").classList.remove("hidden");
+  showNextVocabCard();
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+function exitVocabSrs(){
+  vocabReviewQueue=[];
+  vocabReviewCurrent=null;
+  document.getElementById("vocabReviewPanel").classList.add("hidden");
+  document.getElementById("vocabDashboard").classList.remove("hidden");
+  document.getElementById("vocabBrowse").classList.remove("hidden");
+  renderWordbook();
+}
+function showNextVocabCard(){
+  if(!vocabReviewQueue.length){
+    vocabReviewCurrent=null;
+    document.getElementById("srsReviewProgress").textContent=`${vocabReviewDone} / ${vocabReviewTotal}`;
+    document.getElementById("srsCard").innerHTML=`
+      <div class="srs-finished">
+        <div class="big">今日の単語、完了！</div>
+        <div class="sub">復習のタイミングは自動で保存されました。</div>
+        <button class="primary" id="srsFinishBtn" style="margin-top:20px;width:100%">単語一覧に戻る</button>
+      </div>`;
+    document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
+    return;
+  }
+  vocabReviewCurrent=vocabReviewQueue[0];
+  const w=vocabReviewCurrent;
+  const s=store.get(),card=s.vocabSrs[w.id];
+  const ints=srsInfo(card);
+  document.getElementById("srsReviewProgress").textContent=`${vocabReviewDone+1} / ${vocabReviewTotal}`;
+  document.getElementById("srsWord").textContent=w.word;
+  document.getElementById("srsMeaning").textContent=w.meaning;
+  document.getElementById("srsPron").textContent=`発音メモ [${w.pron}]`;
+  document.getElementById("srsSentence").textContent=w.sentence;
+  document.getElementById("srsSentenceJp").textContent=w.sentenceJp;
+  document.getElementById("srsAgainWhen").textContent=fmtInterval(0,ints.againMin);
+  document.getElementById("srsHardWhen").textContent=fmtInterval(ints.hardDays);
+  document.getElementById("srsGoodWhen").textContent=fmtInterval(ints.goodDays);
+  document.getElementById("srsEasyWhen").textContent=fmtInterval(ints.easyDays);
+  document.getElementById("srsBack").classList.add("hidden");
+  document.getElementById("srsReveal").classList.remove("hidden");
+}
+function revealVocabAnswer(){
+  if(!vocabReviewCurrent)return;
+  document.getElementById("srsBack").classList.remove("hidden");
+  document.getElementById("srsReveal").classList.add("hidden");
+}
+function rateVocabCard(rating){
+  if(!vocabReviewCurrent)return;
+  const w=vocabReviewCurrent,s=store.get(),now=Date.now(),day=localDay();
+  const prev=s.vocabSrs[w.id]||{
+    status:"new",intervalDays:0,ease:2.3,reps:0,lapses:0,firstSeenDay:day,firstSeenAt:now
+  };
+  const ints=srsInfo(prev);
+  let interval=0,dueAt=now+10*60*1000,ease=Number(prev.ease||2.3),status="learning";
+  if(rating==="again"){
+    prev.lapses=Number(prev.lapses||0)+1;
+    ease=Math.max(1.3,ease-0.2);
+  }else if(rating==="hard"){
+    interval=ints.hardDays;dueAt=now+interval*86400000;
+    ease=Math.max(1.3,ease-0.1);status="review";
+  }else if(rating==="good"){
+    interval=ints.goodDays;dueAt=now+interval*86400000;status="review";
+  }else if(rating==="easy"){
+    interval=ints.easyDays;dueAt=now+interval*86400000;
+    ease=Math.min(3.2,ease+0.1);status="review";
+  }
+  const reps=Number(prev.reps||0)+1;
+  if(interval>=30&&rating!=="again")status="mastered";
+  s.vocabSrs[w.id]={
+    ...prev,status,intervalDays:interval,ease,reps,dueAt,
+    lastReviewAt:now,lastRating:rating,firstSeenDay:prev.firstSeenDay||day,firstSeenAt:prev.firstSeenAt||now
+  };
+  store.set(s);
+  vocabReviewQueue.shift();
+  vocabReviewDone++;
+  showNextVocabCard();
+}
+
 let vocabFilter="all";
 function toggleFavoriteEntry(entry){
   const s=store.get();
@@ -1275,6 +1516,10 @@ function toggleFavoriteEntry(entry){
   store.set(s);
 }
 function renderWordbook(){
+  renderVocabDashboard();
+  document.getElementById("vocabDashboard").classList.remove("hidden");
+  document.getElementById("vocabReviewPanel").classList.add("hidden");
+  document.getElementById("vocabBrowse").classList.remove("hidden");
   const box=document.getElementById("wordbookList");
   const q=(document.getElementById("vocabSearch")?.value||"").trim().toLowerCase();
   const s=store.get();
@@ -1364,6 +1609,14 @@ document.querySelectorAll("[data-mini]").forEach(btn=>{
   };
 });
 
+document.getElementById("startVocabReview").onclick=startVocabSrs;
+document.getElementById("exitVocabReview").onclick=exitVocabSrs;
+document.getElementById("srsReveal").onclick=revealVocabAnswer;
+document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
+document.getElementById("srsSpeakWord").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
+document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,0.86)};
+document.querySelectorAll("[data-srs-rate]").forEach(btn=>btn.onclick=()=>rateVocabCard(btn.dataset.srsRate));
+
 document.getElementById("vocabSearch").addEventListener("input",renderWordbook);
 document.getElementById("vocabAllBtn").onclick=()=>{vocabFilter="all";renderWordbook()};
 document.getElementById("vocabSavedBtn").onclick=()=>{vocabFilter="saved";renderWordbook()};
@@ -1449,7 +1702,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=130",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=140",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
