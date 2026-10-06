@@ -1453,50 +1453,132 @@ function setVocabNewPerDay(value){
 function localDay(){
   return new Date().toLocaleDateString("sv-SE");
 }
+
+function clamp(n,min,max){return Math.min(max,Math.max(min,n))}
 function srsInfo(card){
-  const interval=Math.max(0,Number(card?.intervalDays||0));
-  const ease=Math.min(3.2,Math.max(1.3,Number(card?.ease||2.3)));
-  const hard=card&&card.reps?Math.max(1,Math.round(Math.max(1,interval)*1.2)):1;
-  const good=card&&card.reps?Math.max(hard+1,Math.round(Math.max(1,interval)*ease)):3;
-  const easy=card&&card.reps?Math.max(good+2,Math.round(Math.max(1,interval)*(ease+0.8))):7;
-  return {againMin:10,hardDays:Math.min(hard,365),goodDays:Math.min(good,365),easyDays:Math.min(easy,365)};
+  const status=card?.status||"new";
+  const step=Number(card?.learningStep||0);
+  if(!card||status==="new"||status==="learning"){
+    return {
+      again:{minutes:1},
+      hard:{minutes:10},
+      good:step>=1?{days:1}:{minutes:10},
+      easy:{days:4}
+    };
+  }
+  const stability=Math.max(1,Number(card.stabilityDays||card.intervalDays||1));
+  const difficulty=clamp(Number(card.difficulty||5),1,10);
+  const hardDays=Math.max(1,Math.round(stability*1.2));
+  const goodDays=Math.max(hardDays+1,Math.round(stability*(1.65+(10-difficulty)*0.13)));
+  const easyDays=Math.max(goodDays+2,Math.round(stability*(2.35+(10-difficulty)*0.18)));
+  return {
+    again:{minutes:10},
+    hard:{days:Math.min(hardDays,3650)},
+    good:{days:Math.min(goodDays,3650)},
+    easy:{days:Math.min(easyDays,3650)}
+  };
 }
-function fmtInterval(days,minutes=0){
-  if(minutes)return minutes+"分";
+function fmtWait(wait){
+  if(wait?.minutes)return wait.minutes+"分";
+  const days=Math.max(1,Number(wait?.days||1));
   if(days<30)return days+"日";
   if(days<365)return Math.round(days/30)+"か月";
-  return Math.round(days/365)+"年";
+  return (Math.round(days/36.5)/10)+"年";
 }
+function isVocabDifficult(card){
+  return !!card && (Number(card.lapses||0)>=3 || Number(card.difficulty||5)>=7.5);
+}
+function logVocabReview(s,id,rating){
+  s.vocabReviewLog=Array.isArray(s.vocabReviewLog)?s.vocabReviewLog:[];
+  s.vocabReviewLog.push({id:id,rating:rating,at:Date.now(),day:localDay()});
+  if(s.vocabReviewLog.length>3000)s.vocabReviewLog=s.vocabReviewLog.slice(-3000);
+}
+function addDaysStamp(days){
+  return Date.now()+Math.max(0,days)*86400000;
+}
+function activityByDay(){
+  const map={},log=store.get().vocabReviewLog||[];
+  for(const x of log){
+    if(!x.day)continue;
+    map[x.day]=(map[x.day]||0)+1;
+  }
+  return map;
+}
+function calcVocabStreak(){
+  const active=new Set((store.get().vocabReviewLog||[]).map(x=>x.day).filter(Boolean));
+  let streak=0,d=new Date();
+  if(!active.has(localDay()))d.setDate(d.getDate()-1);
+  for(let i=0;i<1000;i++){
+    const key=d.toLocaleDateString("sv-SE");
+    if(!active.has(key))break;
+    streak++;
+    d.setDate(d.getDate()-1);
+  }
+  return streak;
+}
+function renderSrsCalendar(){
+  const box=document.getElementById("srsCalendar");
+  if(!box)return;
+  const activity=activityByDay(),cells=[];
+  for(let i=13;i>=0;i--){
+    const d=new Date();d.setDate(d.getDate()-i);
+    const key=d.toLocaleDateString("sv-SE"),count=activity[key]||0;
+    cells.push('<div class="srs-day '+(count?'active':'')+'"><strong>'+(d.getMonth()+1)+'/'+d.getDate()+'</strong><span>'+(count?count+'回':'-')+'</span></div>');
+  }
+  box.innerHTML=cells.join("");
+}
+
+
 function getVocabSrsSummary(){
   const catalog=vocabCatalog(),s=store.get(),now=Date.now(),day=localDay();
+  const end=new Date();end.setHours(23,59,59,999);
   const states=s.vocabSrs||{};
-  const due=catalog.filter(w=>states[w.id]&&Number(states[w.id].dueAt||0)<=now);
+  const active=catalog.filter(w=>states[w.id]&&!states[w.id].suspended&&!states[w.id].manualMastered);
+  const due=active.filter(w=>Number(states[w.id].dueAt||0)<=now);
+  const dueToday=active.filter(w=>Number(states[w.id].dueAt||0)<=end.getTime());
   const introducedToday=catalog.filter(w=>states[w.id]?.firstSeenDay===day).length;
   const unseen=catalog.filter(w=>!states[w.id]);
   const newPerDay=getVocabNewPerDay();
   const newCount=Math.min(Math.max(0,newPerDay-introducedToday),unseen.length);
-  const mastered=catalog.filter(w=>states[w.id]?.status==="mastered").length;
+  const mastered=catalog.filter(w=>states[w.id]?.status==="mastered"||states[w.id]?.manualMastered).length;
   const learned=catalog.filter(w=>states[w.id]).length;
-  return {dueCount:due.length,newCount,mastered,learned,unseen:unseen.length};
+  const difficult=catalog.filter(w=>isVocabDifficult(states[w.id])&&!states[w.id]?.suspended).length;
+  const suspended=catalog.filter(w=>states[w.id]?.suspended).length;
+  const todayReviews=(s.vocabReviewLog||[]).filter(x=>x.day===day).length;
+  return {
+    dueCount:due.length,
+    newCount:newCount,
+    forecastCount:dueToday.length+newCount,
+    mastered:mastered,learned:learned,unseen:unseen.length,
+    difficult:difficult,suspended:suspended,todayReviews:todayReviews,streak:calcVocabStreak()
+  };
 }
+
+
 function renderVocabDashboard(){
   const x=getVocabSrsSummary();
   document.getElementById("srsDueCount").textContent=x.dueCount;
   document.getElementById("srsNewCount").textContent=x.newCount;
+  document.getElementById("srsForecastCount").textContent=x.forecastCount;
   document.getElementById("srsMasteredCount").textContent=x.mastered;
+  document.getElementById("srsStreak").textContent=x.streak+"日";
+  document.getElementById("srsTodayReviews").textContent=x.todayReviews;
+  document.getElementById("srsDifficultCount").textContent=x.difficult;
   const newPerDay=getVocabNewPerDay();
   document.getElementById("vocabNewPerDay").value=String(newPerDay);
   const btn=document.getElementById("startVocabReview");
   const total=x.dueCount+x.newCount;
   btn.disabled=total===0;
-  btn.textContent=total?(`今日の復習を始める · ${total}枚`):"今日の学習は完了しました ✓";
+  btn.textContent=total?("今日の復習を始める · "+total+"枚"):"今すぐの学習は完了しました ✓";
   document.getElementById("srsDashboardNote").textContent=
-    `学習開始 ${x.learned}/${vocabCatalog().length}語 · 未学習 ${x.unseen}語 · 新規は1日最大${newPerDay}語`;
+    "学習開始 "+x.learned+"/"+vocabCatalog().length+"語 · 未学習 "+x.unseen+"語 · 保留 "+x.suspended+"語 · 新規は1日最大"+newPerDay+"語";
+  renderSrsCalendar();
 }
+
 function buildVocabReviewQueue(){
   const catalog=vocabCatalog(),s=store.get(),now=Date.now(),day=localDay(),states=s.vocabSrs||{};
   const due=catalog
-    .filter(w=>states[w.id]&&Number(states[w.id].dueAt||0)<=now)
+    .filter(w=>states[w.id]&&!states[w.id].suspended&&!states[w.id].manualMastered&&Number(states[w.id].dueAt||0)<=now)
     .sort((a,b)=>Number(states[a.id].dueAt||0)-Number(states[b.id].dueAt||0));
   const introducedToday=catalog.filter(w=>states[w.id]?.firstSeenDay===day).length;
   const allowance=Math.max(0,getVocabNewPerDay()-introducedToday);
@@ -1548,10 +1630,17 @@ function showNextVocabCard(){
   document.getElementById("srsPron").textContent=`発音メモ [${w.pron}]`;
   document.getElementById("srsSentence").textContent=w.sentence;
   document.getElementById("srsSentenceJp").textContent=w.sentenceJp;
-  document.getElementById("srsAgainWhen").textContent=fmtInterval(0,ints.againMin);
-  document.getElementById("srsHardWhen").textContent=fmtInterval(ints.hardDays);
-  document.getElementById("srsGoodWhen").textContent=fmtInterval(ints.goodDays);
-  document.getElementById("srsEasyWhen").textContent=fmtInterval(ints.easyDays);
+  document.getElementById("srsAgainWhen").textContent=fmtWait(ints.again);
+  document.getElementById("srsHardWhen").textContent=fmtWait(ints.hard);
+  document.getElementById("srsGoodWhen").textContent=fmtWait(ints.good);
+  document.getElementById("srsEasyWhen").textContent=fmtWait(ints.easy);
+  const cardMeta=[];
+  if(card?.status==="learning")cardMeta.push("学習中");
+  else if(card?.status==="review")cardMeta.push("復習");
+  else if(card?.status==="mastered")cardMeta.push("定着");
+  else cardMeta.push("新規");
+  if(isVocabDifficult(card))cardMeta.push('<span class="danger">🔥 苦手</span>');
+  document.getElementById("srsCardMeta").innerHTML=cardMeta.join(" · ");
   document.getElementById("srsBack").classList.add("hidden");
   document.getElementById("srsReveal").classList.remove("hidden");
 }
