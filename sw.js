@@ -1,4 +1,4 @@
-const CACHE='topik-v180';
+const CACHE='topik-v181';
 const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./questions-extra.js?v=110','./vocab-catalog.js?v=140'];
 
 self.addEventListener('install',event=>{
