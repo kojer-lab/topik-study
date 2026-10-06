@@ -1609,6 +1609,7 @@ function showNextVocabCard(){
     vocabReviewCurrent=null;
     document.getElementById("srsReviewProgress").textContent=`${vocabReviewDone} / ${vocabReviewTotal}`;
     document.getElementById("srsWord").classList.add("hidden");
+    document.getElementById("srsCardMeta").classList.add("hidden");
     document.querySelector(".srs-front-hint").classList.add("hidden");
     document.getElementById("srsSpeakFront").classList.add("hidden");
     document.getElementById("srsReveal").classList.add("hidden");
@@ -1619,6 +1620,7 @@ function showNextVocabCard(){
   vocabReviewCurrent=vocabReviewQueue[0];
   document.getElementById("srsFinished").classList.add("hidden");
   document.getElementById("srsWord").classList.remove("hidden");
+  document.getElementById("srsCardMeta").classList.remove("hidden");
   document.querySelector(".srs-front-hint").classList.remove("hidden");
   document.getElementById("srsSpeakFront").classList.remove("hidden");
   const w=vocabReviewCurrent;
