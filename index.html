@@ -1,0 +1,1163 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<meta name="theme-color" content="#4f46e5">
+
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="apple-mobile-web-app-title" content="TOPIK 2 Study">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="manifest" href="./manifest.webmanifest">
+<link rel="apple-touch-icon" href="./apple-touch-icon.png">
+
+<title>TOPIK I · 2級 Study v0.5</title>
+<style>
+:root{
+  --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
+  --accent:#4f46e5;--accent2:#eef2ff;--good:#15803d;--bad:#b91c1c;
+  --warn:#b45309;--shadow:0 10px 30px rgba(28,39,64,.08)
+}
+body.dark{
+  --bg:#10131a;--panel:#181d27;--text:#f4f7fb;--muted:#a8b0bf;--line:#2b3240;
+  --accent:#8b82ff;--accent2:#242443;--good:#4ade80;--bad:#fb7185;
+  --warn:#fbbf24;--shadow:0 10px 30px rgba(0,0,0,.22)
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans JP","Noto Sans KR",Arial,sans-serif
+}
+button,select{font:inherit}
+button{-webkit-tap-highlight-color:transparent}
+.app{display:grid;grid-template-columns:240px 1fr;min-height:100vh}
+aside{
+  background:var(--panel);border-right:1px solid var(--line);padding:24px 18px;
+  position:sticky;top:0;height:100vh
+}
+.brand{display:flex;align-items:center;gap:10px;font-weight:800;font-size:18px;margin-bottom:26px}
+.brand-badge{
+  width:40px;height:34px;border-radius:10px;background:var(--accent);color:white;
+  display:grid;place-items:center;font-size:12px;font-weight:900
+}
+.brand small{display:block;color:var(--muted);font-size:11px;font-weight:600;margin-top:2px}
+.nav{display:flex;flex-direction:column;gap:8px}
+.nav button{
+  border:0;background:transparent;color:var(--text);padding:11px 12px;border-radius:10px;
+  text-align:left;cursor:pointer
+}
+.nav button:hover,.nav button.active{background:var(--accent2);color:var(--accent);font-weight:700}
+.side-bottom{position:absolute;bottom:20px;left:18px;right:18px}
+.ghost{width:100%;border:1px solid var(--line);background:transparent;color:var(--text);padding:10px 12px;border-radius:10px;cursor:pointer}
+main{padding:34px;max-width:1150px;width:100%;margin:0 auto}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px;gap:16px}
+h1{font-size:30px;margin:0}
+.sub{color:var(--muted);margin-top:6px;line-height:1.6}
+.pill{background:var(--panel);border:1px solid var(--line);padding:10px 14px;border-radius:999px;color:var(--muted);white-space:nowrap}
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:20px;box-shadow:var(--shadow)}
+.stat-num{font-size:30px;font-weight:800;margin-top:8px}
+.label{color:var(--muted);font-size:13px}
+.progress{height:10px;background:var(--line);border-radius:999px;overflow:hidden;margin-top:12px}
+.progress span{display:block;height:100%;background:var(--accent);width:0}
+.section-title{font-size:18px;font-weight:800;margin:28px 0 12px}
+.actions{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.action{cursor:pointer;transition:.18s}
+.action:hover{transform:translateY(-2px)}
+.action strong{display:block;font-size:18px;margin-bottom:6px}
+.action p{margin:0;color:var(--muted);line-height:1.55;font-size:14px}
+.level-box{display:grid;grid-template-columns:1.2fr .8fr;gap:14px}
+.level-badge{font-size:42px;font-weight:900;color:var(--accent);letter-spacing:-.03em}
+.feature-list{line-height:1.9;margin:0;padding-left:20px}
+.kword-row{display:flex;flex-wrap:wrap;gap:8px;margin-top:14px}
+.kword{
+  border:1px solid var(--line);background:var(--bg);color:var(--text);
+  padding:8px 11px;border-radius:999px;font-weight:700
+}
+.quiz-wrap{max-width:780px;margin:0 auto}
+.quiz-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.qtype{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.06em}
+.counter{color:var(--muted);font-size:13px}
+.question{font-size:24px;line-height:1.7;font-weight:700;margin:14px 0 22px;word-break:keep-all}
+.reading{
+  font-size:17px;line-height:2;font-weight:500;background:var(--bg);
+  border:1px solid var(--line);padding:18px;border-radius:12px;margin-bottom:20px
+}
+.choices{display:grid;gap:10px}
+.choice{
+  border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:14px 16px;border-radius:12px;text-align:left;cursor:pointer;line-height:1.6
+}
+.choice:hover{border-color:var(--accent)}
+.choice.correct{border-color:var(--good);background:rgba(34,197,94,.08)}
+.choice.wrong{border-color:var(--bad);background:rgba(239,68,68,.08)}
+.choice:disabled{cursor:default}
+.explain{
+  display:none;margin-top:18px;padding:16px;border-radius:12px;
+  background:var(--accent2);line-height:1.75
+}
+.explain.show{display:block}
+.answer-ok{color:var(--good);font-weight:800}
+.answer-ng{color:var(--bad);font-weight:800}
+.script{
+  margin-top:14px;padding:14px;border:1px solid var(--line);border-radius:10px;
+  background:var(--panel);white-space:pre-line
+}
+.mini-title{font-size:12px;font-weight:800;color:var(--muted);margin:14px 0 8px;letter-spacing:.04em}
+.glosses{display:flex;flex-wrap:wrap;gap:8px}
+.gloss-btn{
+  border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:8px 10px;border-radius:999px;cursor:pointer;font-weight:700
+}
+.gloss-btn:hover{border-color:var(--accent);color:var(--accent)}
+.gloss-detail{
+  display:none;margin-top:10px;padding:12px;border-radius:10px;background:var(--bg);
+  border:1px solid var(--line)
+}
+.gloss-detail.show{display:block}
+.listenbox{
+  display:none;margin-bottom:18px;padding:14px;border-radius:12px;background:var(--bg);
+  border:1px solid var(--line)
+}
+.listenbox.show{display:block}
+.listen-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.listen-btn{
+  border:0;background:var(--accent);color:white;padding:10px 14px;border-radius:10px;
+  font-weight:800;cursor:pointer
+}
+.speed{
+  border:1px solid var(--line);background:var(--panel);color:var(--text);
+  border-radius:10px;padding:9px 10px
+}
+.listen-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
+.nextrow{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
+.primary{border:0;background:var(--accent);color:#fff;padding:11px 18px;border-radius:10px;font-weight:700;cursor:pointer}
+.secondary{border:1px solid var(--line);background:var(--panel);color:var(--text);padding:11px 18px;border-radius:10px;cursor:pointer}
+.list{display:grid;gap:12px}
+.mistake{display:flex;justify-content:space-between;gap:18px;align-items:flex-start}
+.mistake-main{min-width:0}
+.mistake-q{font-weight:700;line-height:1.55}
+.mistake-meta{font-size:12px;color:var(--muted);margin-top:8px}
+.empty{text-align:center;color:var(--muted);padding:40px 20px}
+.hidden{display:none!important}
+.footer-note{color:var(--muted);font-size:12px;margin-top:30px;line-height:1.7}
+.notice{padding:12px 14px;border-radius:12px;border:1px solid var(--line);background:var(--bg);line-height:1.6}
+
+.modebar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.modebtn{
+  border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:9px 12px;border-radius:999px;cursor:pointer;font-weight:700
+}
+.modebtn.active{background:var(--accent);border-color:var(--accent);color:#fff}
+.hintbox{
+  display:none;margin:0 0 18px;padding:13px 14px;border-radius:12px;
+  background:var(--bg);border:1px dashed var(--line);color:var(--muted);line-height:1.6
+}
+.hintbox.show{display:block}
+.hintbtn{
+  border:1px solid var(--line);background:var(--panel);color:var(--text);
+  padding:8px 11px;border-radius:9px;cursor:pointer;font-size:13px
+}
+
+
+.hero-study{
+  display:flex;justify-content:space-between;gap:18px;align-items:center;
+  padding:22px;margin:18px 0 4px;border-radius:18px;background:linear-gradient(135deg,var(--accent2),var(--panel));
+  border:1px solid var(--line)
+}
+.hero-study strong{font-size:22px;display:block;margin-bottom:6px}
+.hero-study p{margin:0;color:var(--muted);line-height:1.6}
+.hero-study .primary{white-space:nowrap}
+.wordbook-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.word-card{position:relative}
+.star-btn{
+  border:0;background:transparent;font-size:21px;cursor:pointer;padding:2px 4px;
+  vertical-align:middle
+}
+.star-btn.saved{filter:saturate(1.3)}
+.mock-summary{display:grid;gap:10px;margin-top:16px}
+.mock-row{
+  border:1px solid var(--line);border-radius:12px;padding:12px;background:var(--panel)
+}
+.mock-row.good{border-color:var(--good)}
+.mock-row.bad{border-color:var(--bad)}
+.type-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.type-stat{padding:16px}
+.type-stat strong{font-size:22px}
+.session-chip{
+  display:inline-block;margin-left:8px;padding:4px 8px;border-radius:999px;
+  background:var(--accent2);color:var(--accent);font-size:11px;font-weight:800
+}
+@media(max-width:800px){
+  .hero-study{flex-direction:column;align-items:stretch}
+  .hero-study .primary{width:100%}
+  .wordbook-grid,.type-stats{grid-template-columns:1fr}
+}
+
+@media(max-width:1000px){.actions{grid-template-columns:repeat(2,1fr)}}
+@media(max-width:900px){
+  .app{grid-template-columns:1fr}
+  aside{position:static;height:auto;border-right:0;border-bottom:1px solid var(--line);padding-bottom:14px}
+  .nav{display:grid;grid-template-columns:repeat(4,1fr)}
+  .side-bottom{position:static;margin-top:12px}
+  main{padding:22px 16px}
+  .grid{grid-template-columns:repeat(2,1fr)}
+  .level-box{grid-template-columns:1fr}
+}
+@media(max-width:560px){
+  .nav{grid-template-columns:repeat(2,1fr)}
+  .grid,.actions{grid-template-columns:1fr}
+  .question{font-size:21px}
+  .topbar{align-items:flex-start;flex-direction:column}
+  .mistake{flex-direction:column}
+  .mistake .secondary{width:100%}
+}
+
+/* ===== v0.5 iPhone / Safari mobile-first override ===== */
+html{-webkit-text-size-adjust:100%;background:var(--bg)}
+body{
+  min-width:0;max-width:560px;margin:0 auto;
+  min-height:100svh;overscroll-behavior-y:contain;
+  padding-top:env(safe-area-inset-top);
+  -webkit-tap-highlight-color:transparent;
+}
+button,.action,.choice,.gloss-btn,.star-btn{touch-action:manipulation}
+.app{display:block;min-height:100svh}
+aside{display:none!important}
+main{
+  width:100%;max-width:none;margin:0;padding:18px 14px calc(98px + env(safe-area-inset-bottom));
+}
+.mobile-header{
+  position:sticky;top:0;z-index:30;
+  display:flex;align-items:center;justify-content:space-between;
+  min-height:54px;margin:-18px -14px 16px;padding:8px 14px;
+  padding-top:max(8px, env(safe-area-inset-top));
+  background:color-mix(in srgb,var(--bg) 88%, transparent);
+  backdrop-filter:blur(16px);-webkit-backdrop-filter:blur(16px);
+  border-bottom:1px solid var(--line)
+}
+.mobile-brand{display:flex;align-items:center;gap:9px;font-weight:900;font-size:16px}
+.mobile-brand .brand-badge{width:34px;height:30px;border-radius:9px;font-size:11px}
+.icon-btn{
+  width:42px;height:42px;border-radius:12px;border:1px solid var(--line);
+  background:var(--panel);color:var(--text);display:grid;place-items:center;cursor:pointer
+}
+.bottom-nav{
+  position:fixed;left:50%;transform:translateX(-50%);bottom:0;z-index:60;
+  width:min(100%,560px);display:grid;grid-template-columns:repeat(5,1fr);
+  background:color-mix(in srgb,var(--panel) 94%, transparent);
+  backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);
+  border-top:1px solid var(--line);
+  padding:7px 6px calc(7px + env(safe-area-inset-bottom));
+}
+.bottom-nav button{
+  border:0;background:transparent;color:var(--muted);min-height:54px;
+  border-radius:12px;font-size:11px;font-weight:700;cursor:pointer;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px
+}
+.bottom-nav button span{font-size:20px;line-height:1}
+.bottom-nav button.active{color:var(--accent);background:var(--accent2)}
+.topbar{margin-bottom:18px}
+.topbar h1,h1{font-size:25px;letter-spacing:-.03em}
+.sub{font-size:14px;line-height:1.65}
+.grid,.actions,.level-box,.type-stats,.wordbook-grid{grid-template-columns:1fr!important;gap:11px}
+.card{padding:17px;border-radius:15px;box-shadow:none}
+.hero-study{
+  margin:10px 0 16px;padding:18px;gap:14px;align-items:stretch;
+  border-radius:18px
+}
+.hero-study strong{font-size:21px}
+.hero-study .primary{min-height:56px;font-size:16px}
+.section-title{font-size:16px;margin:22px 2px 10px}
+.action{min-height:94px;padding:17px}
+.action strong{font-size:17px}
+.action p{font-size:13px}
+.stat-num{font-size:26px}
+.quiz-wrap{max-width:none}
+.modebar{
+  position:sticky;top:55px;z-index:25;margin:0 -14px 12px;
+  padding:8px 14px;background:color-mix(in srgb,var(--bg) 94%, transparent);
+  backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);
+  border-bottom:1px solid var(--line)
+}
+.modebtn,.hintbtn{min-height:42px;padding:9px 12px}
+.quiz-head{margin:4px 0 10px}
+.quiz-wrap>.card{padding:17px 14px;border-radius:17px}
+.question{font-size:21px;line-height:1.68;margin:14px 0 18px;word-break:keep-all}
+.reading{font-size:16px;line-height:1.9;padding:15px;margin-bottom:16px}
+.choices{gap:11px}
+.choice{
+  min-height:56px;padding:15px 14px;border-radius:13px;font-size:16px;line-height:1.55;
+  box-shadow:none
+}
+.explain{margin-top:16px;padding:15px;font-size:14px}
+.glosses{gap:8px}
+.gloss-btn{min-height:42px}
+.star-btn{min-width:42px;min-height:42px;font-size:22px}
+.listenbox{padding:14px}
+.listen-btn{min-height:50px;flex:1;font-size:15px}
+.speed{min-height:50px;font-size:16px}
+.nextrow{gap:8px;margin-top:18px}
+.nextrow .secondary{min-height:52px;flex:0 0 92px}
+.nextrow .primary{min-height:52px;flex:1;font-size:16px}
+.primary,.secondary{min-height:48px}
+.pill{font-size:12px;padding:8px 11px}
+.mistake{gap:10px}
+.mistake .secondary{width:100%}
+.mobile-hub-title{font-size:13px;color:var(--muted);font-weight:800;margin:2px 2px 10px}
+.hub-grid{display:grid;gap:11px}
+.hub-card{
+  display:flex;align-items:center;gap:14px;min-height:92px;
+  border:1px solid var(--line);background:var(--panel);border-radius:16px;padding:16px;
+  cursor:pointer
+}
+.hub-icon{
+  width:48px;height:48px;border-radius:14px;background:var(--accent2);
+  display:grid;place-items:center;font-size:24px;flex:0 0 auto
+}
+.hub-card strong{font-size:17px;display:block;margin-bottom:4px}
+.hub-card p{margin:0;color:var(--muted);font-size:13px;line-height:1.5}
+.ios-tip{
+  margin-top:14px;padding:13px;border-radius:13px;background:var(--accent2);
+  color:var(--text);font-size:13px;line-height:1.6
+}
+@media(min-width:561px){
+  body{border-left:1px solid var(--line);border-right:1px solid var(--line)}
+}
+
+</style>
+</head>
+<body>
+<div class="app">
+<aside>
+  <div class="brand">
+    <div class="brand-badge">2級</div>
+    <div>TOPIK I STUDY<small>Level 2 · 初級韓国語</small></div>
+  </div>
+  <div class="nav">
+    <button data-view="home" class="active">🏠 ホーム</button>
+    <button data-view="vocab">🔤 単語</button>
+    <button data-view="grammar">🧩 文法</button>
+    <button data-view="reading">📖 読解</button>
+    <button data-view="listening">🎧 聴解</button>
+    <button data-view="review">📝 間違いノート</button>
+    <button data-view="wordbook">⭐ 単語帳</button>
+    <button data-view="stats">📊 学習記録</button>
+  </div>
+  <div class="side-bottom"><button class="ghost" id="themeBtn">🌙 ダークモード</button></div>
+</aside>
+
+<main>
+<div class="mobile-header">
+  <div class="mobile-brand">
+    <div class="brand-badge">2級</div>
+    <div>TOPIK I STUDY</div>
+  </div>
+  <button class="icon-btn" id="mobileThemeBtn" aria-label="テーマ切替">◐</button>
+</div>
+<section id="homeView">
+  <div class="topbar">
+    <div>
+      <h1>TOPIK I · 2級を少しずつ</h1>
+      <div class="sub">問題・指示・選択肢は韓国語中心。必要な時だけ日本語ヒントを確認し、解説は回答後に表示します。</div>
+    </div>
+    <div class="pill" id="todayText"></div>
+  </div>
+
+  
+  <div class="hero-study">
+    <div>
+      <strong>今日の学習 · 15問</strong>
+      <p>単語 → 文法 → 読解 → 聴解を自動で組み合わせます。迷ったらここから始めればOKです。</p>
+    </div>
+    <button class="primary" id="dailyStudyBtn">今日の学習を始める</button>
+  </div>
+
+<div class="grid">
+    <div class="card"><div class="label">解いた問題</div><div class="stat-num" id="solvedStat">0</div></div>
+    <div class="card"><div class="label">正答率</div><div class="stat-num" id="accuracyStat">0%</div></div>
+    <div class="card"><div class="label">間違い</div><div class="stat-num" id="mistakeStat">0</div></div>
+    <div class="card"><div class="label">今日の目標</div><div class="stat-num" id="goalStat">0/15</div><div class="progress"><span id="goalBar"></span></div></div>
+  </div>
+
+  <div class="section-title">すぐ勉強する</div>
+  <div class="actions">
+    <div class="card action" data-start="vocab"><strong>🔤 単語</strong><p>韓国語の文脈の中で初級語彙の意味を確認。</p></div>
+    <div class="card action" data-start="grammar"><strong>🧩 文法</strong><p>韓国語の文の中で助詞、時制、理由、予定などを練習。</p></div>
+    <div class="card action" data-start="reading"><strong>📖 読解</strong><p>TOPIK形式を意識した韓国語の案内・メッセージを読む練習。</p></div>
+    <div class="card action" data-start="listening"><strong>🎧 聴解</strong><p>韓国語音声を聞いて韓国語の選択肢から答える練習。</p></div>
+    <div class="card action" id="mockStartCard"><strong>🧪 模擬試験</strong><p>20問。途中で正解を表示せず、最後にまとめて採点します。</p></div>
+  </div>
+
+  <div class="section-title">このバージョン</div>
+  <div class="level-box">
+    <div class="card">
+      <div class="level-badge">TOPIK I · 2級</div>
+      <div class="sub">TOPIK II（3〜6級）ではなく、TOPIK Iの2級を想定した初級学習版です。</div>
+      <ul class="feature-list">
+        <li>問題・指示・選択肢は韓国語中心</li><li>日本語ヒントは学習モードのみ表示</li>
+        <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li>
+        <li>韓国語TTSによる聴解練習</li>
+        <li>回答後に台本・日本語訳を表示</li>
+        <li>単語をタップすると意味・発音メモを表示</li>
+        <li>ブラウザに学習記録を保存</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="label">今日のミニ単語</div>
+      <div class="kword-row">
+        <button class="kword" data-mini="약속|約束|약쏙">약속</button>
+        <button class="kword" data-mini="준비|準備|준비">준비</button>
+        <button class="kword" data-mini="필요하다|必要だ|피료하다">필요하다</button>
+        <button class="kword" data-mini="같이|一緒に|가치">같이</button>
+      </div>
+      <div id="miniGloss" class="notice" style="margin-top:14px;color:var(--muted)">単語をタップすると日本語の意味と発音メモが出ます。</div>
+    </div>
+  </div>
+
+  <div class="footer-note">
+    ※ v0.5はiPhone Safari専用のモバイルファーストUIに再設計した学習版です。実際のTOPIK問題を転載したものではありません。
+  </div>
+</section>
+
+<section id="quizView" class="hidden">
+  <div class="quiz-wrap">
+    <div class="modebar">
+      <button class="modebtn active" id="studyModeBtn">学習モード</button>
+      <button class="modebtn" id="testModeBtn">実戦モード</button>
+      <button class="hintbtn" id="hintBtn">日本語ヒント</button>
+    </div>
+    <div class="hintbox" id="hintBox"></div>
+    <div class="quiz-head">
+      <div class="qtype" id="quizType"></div>
+      <div class="counter" id="quizCounter"></div>
+    </div>
+    <div class="card">
+      <div id="listenBox" class="listenbox">
+        <div class="listen-controls">
+          <button class="listen-btn" id="playBtn">▶ 聞く</button>
+          <select class="speed" id="speedSelect" aria-label="再生速度">
+            <option value="0.75">0.75×</option>
+            <option value="0.9" selected>0.9×</option>
+            <option value="1">1.0×</option>
+          </select>
+        </div>
+        <div class="listen-note">先に音声だけを聞いて答えてみましょう。台本は回答後に表示されます。</div>
+      </div>
+
+      <div id="passage" class="reading hidden"></div>
+      <div class="question" id="question"></div>
+      <div class="choices" id="choices"></div>
+      <div class="explain" id="explanation"></div>
+
+      <div class="nextrow">
+        <button class="secondary" id="homeBtn">ホームへ</button>
+        <button class="primary hidden" id="nextBtn">次の問題</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<section id="learningView" class="hidden">
+  <div class="topbar"><div><h1>学習</h1><div class="sub">毎日の基礎練習。まずはここから進めればOKです。</div></div></div>
+
+  <div class="hub-grid">
+    <div class="hub-card" id="dailyStudyHub">
+      <div class="hub-icon">▶️</div>
+      <div><strong>今日の学習 · 15問</strong><p>単語・文法・読解・聴解を自動で組み合わせます。</p></div>
+    </div>
+    <div class="hub-card" data-start="vocab">
+      <div class="hub-icon">🔤</div>
+      <div><strong>単語</strong><p>TOPIK Iで必要な基礎語彙を文脈で確認。</p></div>
+    </div>
+    <div class="hub-card" data-start="grammar">
+      <div class="hub-icon">🧩</div>
+      <div><strong>文法</strong><p>助詞・時制・理由・予定などを練習。</p></div>
+    </div>
+    <div class="hub-card" id="mistakeReviewHub">
+      <div class="hub-icon">📝</div>
+      <div><strong>間違いだけ復習</strong><p>これまで間違えた問題だけをもう一度解きます。</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="topikView" class="hidden">
+  <div class="topbar"><div><h1>TOPIK練習</h1><div class="sub">実際の試験を意識して、読解と聴解を中心に練習します。</div></div></div>
+
+  <div class="hub-grid">
+    <div class="hub-card" data-start="reading">
+      <div class="hub-icon">📖</div>
+      <div><strong>読解</strong><p>案内・メッセージ・短文から内容を判断。</p></div>
+    </div>
+    <div class="hub-card" data-start="listening">
+      <div class="hub-icon">🎧</div>
+      <div><strong>聴解</strong><p>韓国語音声を聞いて、韓国語の選択肢から回答。</p></div>
+    </div>
+    <div class="hub-card" id="mockStartHub">
+      <div class="hub-icon">🧪</div>
+      <div><strong>模擬試験 · 20問</strong><p>途中で正解を表示せず、最後にまとめて採点します。</p></div>
+    </div>
+  </div>
+
+  <div class="ios-tip">実戦モードでは日本語ヒントを隠して、韓国語だけで解くことができます。</div>
+</section>
+
+<section id="reviewView" class="hidden">
+  <div class="topbar">
+    <div><h1>間違いノート</h1><div class="sub">間違えた問題を自動でまとめています。</div></div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap"><button class="primary" id="retryMistakes">間違いだけ解く</button><button class="secondary" id="clearMistakes">すべて削除</button></div>
+  </div>
+  <div id="mistakeList" class="list"></div>
+</section>
+
+
+<section id="wordbookView" class="hidden">
+  <div class="topbar">
+    <div><h1>単語帳</h1><div class="sub">解説の ⭐ を押した単語がここに保存されます。</div></div>
+    <button class="secondary" id="clearWordbook">すべて削除</button>
+  </div>
+  <div id="wordbookList" class="wordbook-grid"></div>
+</section>
+
+<section id="statsView" class="hidden">
+  <div class="topbar"><div><h1>学習記録</h1><div class="sub">このブラウザに保存されている学習データです。</div></div></div>
+  <div class="grid">
+    <div class="card"><div class="label">総問題数</div><div class="stat-num" id="stSolved">0</div></div>
+    <div class="card"><div class="label">正解数</div><div class="stat-num" id="stCorrect">0</div></div>
+    <div class="card"><div class="label">正答率</div><div class="stat-num" id="stAcc">0%</div></div>
+    <div class="card"><div class="label">間違いノート</div><div class="stat-num" id="stMistakes">0</div></div>
+  </div>
+  <div class="section-title">分野別</div><div id="typeStats" class="type-stats"></div>
+  <div class="section-title">データ管理</div>
+  <div class="card"><button class="secondary" id="resetAll">学習記録をすべて初期化</button></div>
+</section>
+</main>
+</div>
+
+<script>
+const data={
+vocab:[
+ {q:"다음 중 ‘시장’과 뜻이 가장 가까운 것은 무엇입니까?",c:["마트","시간","사진","회사"],a:0,h:"「시장」は市場・マーケットという意味です。",e:"「시장」は『市場・マーケット』です。日常会話では「마트」と近い場面で使われます。例：시장에서 과일을 샀어요.",v:[["시장","市場・マーケット","시장"],["과일","果物","과일"],["샀어요","買いました","사써요"]]},
+ {q:"다음 중 ‘약속’과 관계있는 것은 무엇입니까?",c:["친구를 만나기로 함","비가 많이 옴","음식을 만듦","책을 읽음"],a:0,h:"「약속」は約束です。",e:"「약속」は『約束』です。『친구를 만나기로 함』は友だちと会う約束をする、という意味です。",v:[["약속","約束","약쏙"],["만나기로 하다","会うことにする","만나기로 하다"]]},
+ {q:"다음 중 ‘필요하다’의 뜻으로 맞는 것은 무엇입니까?",c:["꼭 있어야 하다","아주 어렵다","거리가 멀다","시간이 없다"],a:0,h:"「필요하다」＝必要だ。",e:"「필요하다」は『必要だ』です。『꼭 있어야 하다』は『必ず必要である』という意味です。",v:[["필요하다","必要だ","피료하다"],["꼭","必ず","꼭"]]},
+ {q:"다음 중 ‘조용하다’와 뜻이 가까운 것은 무엇입니까?",c:["소리가 거의 없다","사람이 아주 많다","값이 비싸다","속도가 빠르다"],a:0,h:"「조용하다」＝静かだ。",e:"「조용하다」は『静かだ』。『소리가 거의 없다』＝音がほとんどない、が最も近いです。",v:[["조용하다","静かだ","조용하다"],["소리","音","소리"]]},
+ {q:"‘여행을 준비해요’의 뜻으로 알맞은 것은 무엇입니까?",c:["여행 갈 것을 미리 챙겨요","여행을 취소해요","여행에서 돌아와요","여행 사진을 봐요"],a:0,h:"「준비하다」＝準備する。",e:"『여행을 준비해요』は『旅行の準備をします』。『미리 챙겨요』＝前もって用意します、が近いです。",v:[["준비하다","準備する","준비하다"],["미리","前もって","미리"]]},
+ {q:"‘학교에 늦었어요’의 뜻으로 알맞은 것은 무엇입니까?",c:["학교에 제시간보다 늦게 갔어요","학교에 아주 일찍 갔어요","학교가 집에서 가까워요","학교에 가지 않았어요"],a:0,h:"「늦다」＝遅い・遅れる。",e:"『학교에 늦었어요』は『学校に遅れました』。予定された時刻より遅く着いたという意味です。",v:[["늦다","遅い・遅れる","늗따"],["제시간","決まった時間・定刻","제시간"]]},
+ {q:"‘같이 영화 봐요’와 뜻이 가까운 것은 무엇입니까?",c:["함께 영화 봐요","영화를 먼저 봐요","영화를 조금 봐요","영화를 다시 봐요"],a:0,h:"「같이」＝一緒に。",e:"「같이」は『一緒に』で、「함께」と意味が近いです。発音は [가치] に近くなります。",v:[["같이","一緒に","가치"],["함께","一緒に","함께"]]},
+ {q:"다음 중 ‘건강’과 관계있는 것은 무엇입니까?",c:["몸이 아프지 않고 잘 지내는 것","비행기를 타는 것","은행에서 돈을 찾는 것","유명한 곳을 구경하는 것"],a:0,h:"「건강」＝健康。",e:"「건강」は『健康』。体が元気で病気ではない状態を表します。",v:[["건강","健康","건강"],["몸","体","몸"]]},
+ {q:"‘이 의자는 편해요’의 뜻으로 알맞은 것은 무엇입니까?",c:["앉아 있기 좋아요","앉으면 위험해요","아주 무거워요","너무 비싸요"],a:0,h:"「편하다」＝楽だ・快適だ。",e:"『이 의자는 편해요』は『この椅子は座り心地がよく、楽です』という意味です。",v:[["편하다","楽だ・快適だ","편하다"],["앉다","座る","안따"]]},
+ {q:"‘자리를 바꿨어요’의 뜻으로 알맞은 것은 무엇입니까?",c:["다른 자리로 옮겼어요","자리에 계속 있었어요","자리를 예약했어요","자리를 찾지 못했어요"],a:0,h:"「바꾸다」＝変える・交換する。",e:"『자리를 바꿨어요』は『席を変えました』。別の席へ移ったという意味です。",v:[["바꾸다","変える・交換する","바꾸다"],["자리","席・場所","자리"]]}
+],
+grammar:[
+ {q:"저는 매일 아침 7시(　) 일어나요.",c:["에","를","와","도"],a:0,h:"時間を表す助詞を選びます。",e:"時間を表す名詞には助詞「에」を使います。『7시에 일어나요』＝7時に起きます。",v:[["매일","毎日","매일"],["아침","朝","아침"],["일어나다","起きる","이러나다"]]},
+ {q:"어제 친구(　) 영화를 봤어요.",c:["하고","보다","까지","부터"],a:0,h:"『友だちと映画を見た』になる助詞です。",e:"「하고」は名詞と名詞をつないだり、『〜と一緒に』という意味で使えます。",v:[["어제","昨日","어제"],["영화","映画","영화"]]},
+ {q:"배가 아파서 병원(　) 갔어요.",c:["에","을","은","만"],a:0,h:"移動の目的地を表す助詞です。",e:"移動の目的地には「에」を使います。『병원에 갔어요』＝病院へ行きました。",v:[["배","お腹","배"],["아프다","痛い・具合が悪い","아프다"],["병원","病院","병원"]]},
+ {q:"주말에 한국 음식을 (　) 싶어요.",c:["먹고","먹은","먹어서","먹지만"],a:0,h:"『〜したい』の形です。",e:"『〜したい』は動詞の語幹＋「-고 싶어요」。먹다 → 먹고 싶어요。",v:[["주말","週末","주말"],["음식","食べ物・料理","음식"],["먹고 싶어요","食べたいです","먹꼬 시퍼요"]]},
+ {q:"비가 (　) 우산을 가져가세요.",c:["오니까","오지만","오고","오면도"],a:0,h:"理由を表す表現を選びます。",e:"「-니까」は理由を表し、『雨が降っているので、傘を持って行ってください』となります。",v:[["비","雨","비"],["우산","傘","우산"],["가져가다","持って行く","가져가다"]]},
+ {q:"내일 친구를 (　) 거예요.",c:["만날","만나서","만났고","만나지만"],a:0,h:"未来・予定の形です。",e:"予定・未来は「-(으)ㄹ 거예요」。만나다 → 만날 거예요。",v:[["내일","明日","내일"],["만날 거예요","会う予定です","만날 꺼예요"]]},
+ {q:"저는 커피(　) 차를 더 좋아해요.",c:["보다","에서","에게","마다"],a:0,h:"『コーヒーよりお茶が好き』の比較表現です。",e:"比較は『A보다 B』で『AよりB』。커피보다 차를 더 좋아해요＝コーヒーよりお茶が好きです。",v:[["보다","〜より","보다"],["더","もっと・より","더"]]},
+ {q:"시간이 없어요. (　) 택시를 탔어요.",c:["그래서","하지만","그리고","그러면"],a:0,h:"前が原因、後ろが結果です。",e:"前の内容が原因、後ろが結果なら「그래서（それで／だから）」が自然です。",v:[["시간","時間","시간"],["그래서","それで・だから","그래서"],["택시","タクシー","택씨"]]},
+ {q:"이 가방은 예쁘(　) 조금 비싸요.",c:["지만","니까","려고","거나"],a:0,h:"『きれいだけど、少し高い』の逆接です。",e:"「-지만」は『〜だが、〜けれど』という逆接です。예쁘지만 조금 비싸요。",v:[["가방","かばん","가방"],["예쁘다","きれいだ・かわいい","예쁘다"],["비싸다","高い","비싸다"]]},
+ {q:"한국에 가면 불고기를 (　).",c:["먹어 보세요","먹고 싶었어요","먹지 않았어요","먹는 중이에요"],a:0,h:"『食べてみてください』になる表現です。",e:"「-아/어 보다」は『試しに〜してみる』。『먹어 보세요』＝食べてみてください。",v:[["가면","行ったら","가면"],["먹어 보다","食べてみる","머거 보다"]]}
+],
+reading:[
+ {passage:"안녕하세요. 저는 오늘 감기에 걸려서 회사에 못 갑니다. 내일은 출근할 수 있을 것 같습니다.",q:"이 사람은 오늘 어떻게 합니까?",c:["회사에 갑니다","회사에 가지 않습니다","여행을 갑니다","병원에서 일합니다"],a:1,h:"今日、この人は会社に行くかどうかを聞いています。",e:"『감기에 걸려서 회사에 못 갑니다』＝風邪をひいて会社に行けません。したがって今日は会社を休みます。",v:[["감기","風邪","감기"],["걸리다","かかる","걸리다"],["출근하다","出勤する","출근하다"]]},
+ {passage:"[도서관 안내]\n월요일: 쉽니다\n화요일~금요일: 오전 9시~오후 8시\n토요일, 일요일: 오전 10시~오후 5시",q:"도서관이 문을 열지 않는 날은 언제입니까?",c:["월요일","화요일","토요일","일요일"],a:0,h:"図書館が休みの日を探します。",e:"案内に『월요일: 쉽니다（月曜日：休み）』とあります。",v:[["도서관","図書館","도서관"],["쉽니다","休みます","쉼니다"]]},
+ {passage:"민수 씨, 저는 먼저 식당에 가 있을게요. 일이 끝나면 식당으로 바로 오세요. 7시에 예약했어요.",q:"두 사람은 어디에서 만납니까?",c:["회사","집","식당","역"],a:2,h:"二人が会う場所を聞いています。",e:"『먼저 식당에 가 있을게요』『식당으로 바로 오세요』から、会う場所は食堂・レストランです。",v:[["먼저","先に","먼저"],["식당","食堂・レストラン","식땅"],["예약하다","予約する","예야카다"]]},
+ {passage:"저는 주말마다 자전거를 탑니다. 집 근처에 큰 공원이 있어서 그곳에서 한 시간 정도 운동합니다.",q:"이 사람에 대한 설명으로 맞는 것은 무엇입니까?",c:["매일 자전거를 탑니다","주말에 공원에서 운동합니다","공원에서 먼 곳에 삽니다","한 시간 동안 공부합니다"],a:1,h:"この人について正しい内容を選びます。",e:"『주말마다（毎週末）』『공원에서 한 시간 정도 운동합니다』とあるので②が正解です。",v:[["주말마다","毎週末","주말마다"],["근처","近く","근처"],["정도","程度・くらい","정도"]]},
+ {passage:"오늘은 비가 많이 옵니다. 오후에는 바람도 강하게 불겠습니다. 밖에 나갈 때 우산을 꼭 준비하세요.",q:"이 글은 무엇에 대한 내용입니까?",c:["날씨","요리","약속 시간","옷 판매"],a:0,h:"文章全体のテーマを選びます。",e:"雨と風について説明し、外出時に傘を準備するよう案内している天気情報です。",v:[["바람","風","바람"],["강하게","強く","강하게"],["꼭","必ず","꼭"]]},
+ {passage:"수진 씨에게\n생일 축하해요! 오늘 저녁 6시에 우리 집에서 작은 파티를 하려고 해요. 시간이 있으면 꼭 오세요.",q:"이 글을 쓴 목적은 무엇입니까?",c:["생일 파티에 초대하려고","일을 부탁하려고","물건을 사려고","여행을 예약하려고"],a:0,h:"このメッセージを書いた目的を選びます。",e:"『생일 축하해요』『작은 파티』『꼭 오세요』から、誕生日パーティーへの招待です。",v:[["생일","誕生日","생일"],["축하하다","祝う","추카하다"],["초대","招待","초대"]]}
+],
+listening:[
+ {audio:"여자: 오늘 저녁에 뭐 먹을까요?\n남자: 저는 비빔밥을 먹고 싶어요.",q:"남자는 무엇을 먹고 싶어 합니까?",c:["비빔밥","김밥","라면","불고기"],a:0,h:"男性が食べたいものを聞いています。",e:"男性は『저는 비빔밥을 먹고 싶어요』と言っています。",jp:"女：今日の夕食は何を食べましょうか？\n男：私はビビンバを食べたいです。",v:[["저녁","夕食・夕方","저녁"],["비빔밥","ビビンバ","비빔빱"],["먹고 싶어요","食べたいです","먹꼬 시퍼요"]]},
+ {audio:"남자: 지하철역이 어디에 있어요?\n여자: 은행 옆에 있어요.",q:"지하철역은 어디에 있습니까?",c:["은행 앞","은행 안","은행 옆","은행 뒤"],a:2,h:"地下鉄駅の位置を聞いています。",e:"女性は『은행 옆에 있어요』＝銀行の隣にあります、と答えています。",jp:"男：地下鉄の駅はどこにありますか？\n女：銀行の隣にあります。",v:[["지하철역","地下鉄駅","지하철력"],["은행","銀行","은행"],["옆","隣・横","엽"]]},
+ {audio:"여자: 내일 몇 시에 만날까요?\n남자: 오후 세 시가 좋아요.",q:"두 사람은 내일 몇 시에 만납니까?",c:["오후 한 시","오후 두 시","오후 세 시","오후 네 시"],a:2,h:"二人が会う時刻を聞いています。",e:"男性が『오후 세 시가 좋아요』と言っているので午後3時です。",jp:"女：明日何時に会いましょうか？\n男：午後3時がいいです。",v:[["내일","明日","내일"],["오후","午後","오후"],["세 시","3時","세 시"]]},
+ {audio:"남자: 왜 이렇게 늦었어요?\n여자: 버스가 안 와서 택시를 탔어요.",q:"여자가 늦은 이유는 무엇입니까?",c:["길을 몰라서","버스가 안 와서","늦잠을 자서","비가 와서"],a:1,h:"女性が遅れた理由を選びます。",e:"女性は『버스가 안 와서』＝バスが来なくて、と理由を説明しています。",jp:"男：どうしてこんなに遅れたんですか？\n女：バスが来なくてタクシーに乗りました。",v:[["늦다","遅い・遅れる","늗따"],["버스","バス","버스"],["택시","タクシー","택씨"]]},
+ {audio:"여자: 주말에 같이 영화 볼래요?\n남자: 미안해요. 주말에는 일을 해야 해요.",q:"남자는 주말에 무엇을 합니까?",c:["영화를 봅니다","여행을 갑니다","일을 합니다","공부하지 않습니다"],a:2,h:"男性が週末にすることを聞いています。",e:"男性は『주말에는 일을 해야 해요』＝週末は仕事をしなければなりません、と言っています。",jp:"女：週末に一緒に映画を見ませんか？\n男：ごめんなさい。週末は仕事をしないといけません。",v:[["같이","一緒に","가치"],["일","仕事","일"],["해야 해요","しなければなりません","해야 해요"]]},
+ {audio:"남자: 이 셔츠 얼마예요?\n여자: 삼만 원이에요. 오늘은 이십 퍼센트 할인해요.",q:"두 사람은 무엇에 대해 이야기하고 있습니까?",c:["옷의 가격과 할인","병원 시간","기차표","날씨"],a:0,h:"二人が何について話しているかを選びます。",e:"シャツの価格が3万ウォンで、今日は20%割引だと説明しています。",jp:"男：このシャツはいくらですか？\n女：3万ウォンです。今日は20パーセント割引です。",v:[["셔츠","シャツ","셔츠"],["삼만 원","3万ウォン","삼만 원"],["할인","割引","하린"]]}
+]
+};
+
+const TYPE_NAMES={
+  vocab:"単語 / 어휘",
+  grammar:"文法 / 문법",
+  reading:"読解 / 읽기",
+  listening:"聴解 / 듣기"
+};
+
+const STORE_KEY="topik1Level2StudyV04";
+const THEME_KEY="topik1Level2Theme";
+function blankState(){
+  return {
+    solved:0,correct:0,mistakes:[],favorites:[],today:{},
+    byType:{
+      vocab:{solved:0,correct:0},
+      grammar:{solved:0,correct:0},
+      reading:{solved:0,correct:0},
+      listening:{solved:0,correct:0}
+    },
+    mockHistory:[]
+  };
+}
+function normalizeState(s){
+  const b=blankState();
+  s=s||{};
+  b.solved=Number(s.solved||0);
+  b.correct=Number(s.correct||0);
+  b.mistakes=Array.isArray(s.mistakes)?s.mistakes:[];
+  b.favorites=Array.isArray(s.favorites)?s.favorites:[];
+  b.today=s.today||{};
+  b.mockHistory=Array.isArray(s.mockHistory)?s.mockHistory:[];
+  for(const k of Object.keys(b.byType)){
+    b.byType[k]=Object.assign(b.byType[k],(s.byType||{})[k]||{});
+  }
+  return b;
+}
+const store={
+  get(){
+    try{return normalizeState(JSON.parse(localStorage.getItem(STORE_KEY)||"{}"))}
+    catch(e){return blankState()}
+  },
+  set(v){localStorage.setItem(STORE_KEY,JSON.stringify(normalizeState(v)))}
+};
+
+let currentType="vocab",currentIndex=0,answered=false,order=[],speech=null,quizMode="study",currentDisplayChoices=[],currentCorrectDisplayIndex=0,sessionItems=null,sessionKind="single",mockAnswers=[];
+const views={
+  home:document.getElementById("homeView"),
+  learning:document.getElementById("learningView"),
+  topik:document.getElementById("topikView"),
+  quiz:document.getElementById("quizView"),
+  review:document.getElementById("reviewView"),
+  wordbook:document.getElementById("wordbookView"),
+  stats:document.getElementById("statsView")
+};
+
+function showView(name){
+  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  Object.values(views).forEach(v=>v.classList.add("hidden"));
+  if(name==="home") views.home.classList.remove("hidden");
+  if(name==="learning") views.learning.classList.remove("hidden");
+  if(name==="topik") views.topik.classList.remove("hidden");
+  if(["vocab","grammar","reading","listening"].includes(name)){
+    views.quiz.classList.remove("hidden");
+    startQuiz(name);
+  }
+  if(name==="review"){views.review.classList.remove("hidden");renderMistakes()}
+  if(name==="wordbook"){views.wordbook.classList.remove("hidden");renderWordbook()}
+  if(name==="stats"){views.stats.classList.remove("hidden");renderStats()}
+  document.querySelectorAll(".nav button,.bottom-nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function shuffledIndexes(n){
+  const a=Array.from({length:n},(_,i)=>i);
+  for(let i=a.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [a[i],a[j]]=[a[j],a[i]];
+  }
+  return a;
+}
+
+function startQuiz(type){
+  currentType=type;
+  sessionItems=null;
+  sessionKind="single";
+  order=shuffledIndexes(data[type].length);
+  currentIndex=0;
+  mockAnswers=[];
+  renderQuestion();
+}
+
+function makeMixedSession(counts){
+  const items=[];
+  for(const [type,count] of Object.entries(counts)){
+    const idxs=shuffledIndexes(data[type].length).slice(0,Math.min(count,data[type].length));
+    idxs.forEach(index=>items.push({type,index}));
+  }
+  // mix categories too
+  for(let i=items.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [items[i],items[j]]=[items[j],items[i]];
+  }
+  return items;
+}
+
+function startDailyStudy(){
+  setQuizMode("study");
+  sessionItems=makeMixedSession({vocab:4,grammar:4,reading:3,listening:4});
+  sessionKind="daily";
+  currentIndex=0;
+  mockAnswers=[];
+  renderQuestion();
+}
+
+function startMistakeReview(){
+  setQuizMode("study");
+  const s=store.get();
+  const items=[];
+  for(const m of s.mistakes){
+    const idx=data[m.type]?.findIndex(x=>x.q===m.q) ?? -1;
+    if(idx>=0) items.push({type:m.type,index:idx});
+  }
+  if(!items.length){alert("復習できる間違い問題がありません。");return;}
+  sessionItems=items.sort(()=>Math.random()-.5);
+  sessionKind="mistakes";
+  currentIndex=0;
+  mockAnswers=[];
+  showViewDirectQuiz();
+  renderQuestion();
+}
+
+function startMockExam(){
+  setQuizMode("test");
+  sessionItems=makeMixedSession({vocab:5,grammar:5,reading:5,listening:5});
+  sessionKind="mock";
+  currentIndex=0;
+  mockAnswers=[];
+  showViewDirectQuiz();
+  renderQuestion();
+}
+
+function showViewDirectQuiz(){
+  Object.values(views).forEach(v=>v.classList.add("hidden"));
+  views.quiz.classList.remove("hidden");
+  document.querySelectorAll(".nav button,.bottom-nav button").forEach(b=>b.classList.remove("active"));
+  window.scrollTo({top:0,behavior:"smooth"});
+}
+
+function getCurrentRef(){
+  if(sessionItems){
+    const ref=sessionItems[currentIndex];
+    currentType=ref.type;
+    return {item:data[ref.type][ref.index],type:ref.type,index:ref.index,total:sessionItems.length};
+  }
+  return {item:data[currentType][order[currentIndex]],type:currentType,index:order[currentIndex],total:data[currentType].length};
+}
+
+function renderQuestion(){
+  answered=false;
+  const ref=getCurrentRef();
+  const item=ref.item;
+  const kindLabel={daily:"今日の学習",mistakes:"復習",mock:"模擬試験",single:""}[sessionKind]||"";
+  document.getElementById("quizType").innerHTML=TYPE_NAMES[currentType]+(kindLabel?`<span class="session-chip">${kindLabel}</span>`:"");
+  document.getElementById("quizCounter").textContent=`${currentIndex+1} / ${ref.total}`;
+
+  const passage=document.getElementById("passage");
+  if(item.passage){
+    passage.textContent=item.passage;
+    passage.classList.remove("hidden");
+  }else{
+    passage.textContent="";
+    passage.classList.add("hidden");
+  }
+
+  const listenBox=document.getElementById("listenBox");
+  if(currentType==="listening"){
+    listenBox.classList.add("show");
+  }else{
+    listenBox.classList.remove("show");
+  }
+
+  document.getElementById("question").textContent=item.q;
+  const hintBtn=document.getElementById("hintBtn");
+  const hintBox=document.getElementById("hintBox");
+  hintBox.textContent=item.h||"";
+  hintBox.classList.remove("show");
+  hintBtn.classList.toggle("hidden",quizMode==="test");
+  const choices=document.getElementById("choices");
+  choices.innerHTML="";
+
+  // 選択肢を毎回シャッフル。元の正解インデックスも一緒に追跡する。
+  const choiceObjects=item.c.map((text,originalIndex)=>({text,originalIndex}));
+  for(let i=choiceObjects.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [choiceObjects[i],choiceObjects[j]]=[choiceObjects[j],choiceObjects[i]];
+  }
+  currentDisplayChoices=choiceObjects.map(x=>x.text);
+  currentCorrectDisplayIndex=choiceObjects.findIndex(x=>x.originalIndex===item.a);
+
+  currentDisplayChoices.forEach((text,idx)=>{
+    const btn=document.createElement("button");
+    btn.className="choice";
+    btn.textContent=`${idx+1}. ${text}`;
+    btn.onclick=()=>answer(idx);
+    choices.appendChild(btn);
+  });
+
+  const exp=document.getElementById("explanation");
+  exp.classList.remove("show");
+  exp.innerHTML="";
+  document.getElementById("nextBtn").classList.add("hidden");
+}
+
+function esc(s){
+  return String(s).replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[m]));
+}
+
+function isFavoriteWord(word){
+  return store.get().favorites.some(x=>x.word===word);
+}
+function glossHTML(list=[]){
+  if(!list.length) return "";
+  const buttons=list.map((g,i)=>{
+    const saved=isFavoriteWord(g[0]);
+    return `<span style="display:inline-flex;align-items:center;gap:2px">
+      <button class="gloss-btn" data-gloss="${i}">${esc(g[0])}</button>
+      <button class="star-btn ${saved?"saved":""}" data-star="${i}" title="単語帳に保存">${saved?"⭐":"☆"}</button>
+    </span>`;
+  }).join("");
+  const details=list.map((g,i)=>`
+    <div class="gloss-detail" data-gloss-detail="${i}">
+      <strong>${esc(g[0])}</strong><br>
+      意味：${esc(g[1])}<br>
+      発音メモ：<strong>[${esc(g[2])}]</strong>
+    </div>`).join("");
+  return `<div class="mini-title">単語メモ · 単語をタップして確認 / ☆で保存</div><div class="glosses">${buttons}</div>${details}`;
+}
+
+function answer(idx){
+  if(answered)return;
+  answered=true;
+  const ref=getCurrentRef();
+  const item=ref.item;
+  const buttons=[...document.querySelectorAll(".choice")];
+  buttons.forEach((b,i)=>{
+    b.disabled=true;
+    if(sessionKind!=="mock"){
+      if(i===currentCorrectDisplayIndex)b.classList.add("correct");
+      if(i===idx&&idx!==currentCorrectDisplayIndex)b.classList.add("wrong");
+    }
+  });
+
+  const isCorrect=idx===currentCorrectDisplayIndex;
+  const s=store.get();
+  s.solved++;
+  s.byType[currentType].solved++;
+  if(isCorrect){s.correct++;s.byType[currentType].correct++;}
+
+  const key=new Date().toLocaleDateString("sv-SE");
+  s.today[key]=(s.today[key]||0)+1;
+
+  if(isCorrect && sessionKind==="mistakes"){
+    const id=`${currentType}-${item.q}`;
+    s.mistakes=s.mistakes.filter(m=>m.id!==id);
+  }
+  if(!isCorrect){
+    const id=`${currentType}-${item.q}`;
+    const existing=s.mistakes.find(m=>m.id===id);
+    if(existing){
+      existing.count++;
+      existing.last=Date.now();
+      existing.chosen=currentDisplayChoices[idx];
+    }else{
+      s.mistakes.unshift({
+        id,type:currentType,q:item.q,correct:item.c[item.a],chosen:currentDisplayChoices[idx],
+        explanation:item.e,count:1,last:Date.now()
+      });
+    }
+  }
+  store.set(s);
+
+  if(sessionKind==="mock"){
+    mockAnswers.push({
+      type:currentType,
+      q:item.q,
+      chosen:currentDisplayChoices[idx],
+      correct:item.c[item.a],
+      ok:isCorrect
+    });
+    const exp=document.getElementById("explanation");
+    exp.innerHTML='<div style="font-weight:800;color:var(--accent)">回答を記録しました。正解は試験終了後に表示します。</div>';
+    exp.classList.add("show");
+    document.getElementById("nextBtn").classList.remove("hidden");
+    renderHome();
+    return;
+  }
+
+  const exp=document.getElementById("explanation");
+  let extra="";
+  if(currentType==="listening"){
+    extra=`<div class="script"><strong>台本</strong><br>${esc(item.audio).replace(/\n/g,"<br>")}<br><br><strong>日本語</strong><br>${esc(item.jp).replace(/\n/g,"<br>")}</div>`;
+  }
+  exp.innerHTML=`
+    <div class="${isCorrect?"answer-ok":"answer-ng"}">${isCorrect?"正解です！":"もう一度確認しましょう。"}</div>
+    <div style="margin-top:6px">正解：<strong>${currentCorrectDisplayIndex+1}. ${esc(currentDisplayChoices[currentCorrectDisplayIndex])}</strong></div>
+    <div style="margin-top:12px">${esc(item.e)}</div>
+    ${extra}
+    ${glossHTML(item.v||[])}
+  `;
+  exp.classList.add("show");
+
+  exp.querySelectorAll("[data-gloss]").forEach(btn=>{
+    btn.onclick=()=>{
+      const target=exp.querySelector(`[data-gloss-detail="${btn.dataset.gloss}"]`);
+      if(!target)return;
+      const wasOpen=target.classList.contains("show");
+      exp.querySelectorAll(".gloss-detail").forEach(x=>x.classList.remove("show"));
+      if(!wasOpen)target.classList.add("show");
+    };
+  });
+  exp.querySelectorAll("[data-star]").forEach(btn=>{
+    btn.onclick=(ev)=>{
+      ev.stopPropagation();
+      const g=(item.v||[])[Number(btn.dataset.star)];
+      if(!g)return;
+      const s2=store.get();
+      const pos=s2.favorites.findIndex(x=>x.word===g[0]);
+      const willSave=pos<0;
+      if(pos>=0){
+        s2.favorites.splice(pos,1);
+      }else{
+        s2.favorites.unshift({word:g[0],meaning:g[1],pron:g[2],savedAt:Date.now()});
+      }
+      store.set(s2);
+      exp.querySelectorAll(`[data-star="${btn.dataset.star}"]`).forEach(star=>{
+        star.textContent=willSave?"⭐":"☆";
+        star.classList.toggle("saved",willSave);
+      });
+    };
+  });
+
+  document.getElementById("nextBtn").classList.remove("hidden");
+  renderHome();
+}
+
+function playCurrent(){
+  if(currentType!=="listening")return;
+  const item=data[currentType][order[currentIndex]];
+  if(!("speechSynthesis" in window)){
+    alert("このブラウザでは音声読み上げに対応していません。Chrome / Edge / Safariなどで試してください。");
+    return;
+  }
+  window.speechSynthesis.cancel();
+  const text=item.audio.replace(/^(여자|남자):\s*/gm,"");
+  speech=new SpeechSynthesisUtterance(text);
+  speech.lang="ko-KR";
+  speech.rate=parseFloat(document.getElementById("speedSelect").value||"0.9");
+  speech.pitch=1;
+  const voices=window.speechSynthesis.getVoices();
+  const ko=voices.find(v=>String(v.lang).toLowerCase().startsWith("ko"));
+  if(ko)speech.voice=ko;
+  window.speechSynthesis.speak(speech);
+}
+
+
+const studyModeBtn=document.getElementById("studyModeBtn");
+const testModeBtn=document.getElementById("testModeBtn");
+const hintBtn=document.getElementById("hintBtn");
+const hintBox=document.getElementById("hintBox");
+
+function setQuizMode(mode){
+  quizMode=mode;
+  studyModeBtn.classList.toggle("active",mode==="study");
+  testModeBtn.classList.toggle("active",mode==="test");
+  hintBtn.classList.toggle("hidden",mode==="test");
+  hintBox.classList.remove("show");
+}
+studyModeBtn.onclick=()=>setQuizMode("study");
+testModeBtn.onclick=()=>setQuizMode("test");
+hintBtn.onclick=()=>hintBox.classList.toggle("show");
+
+document.getElementById("playBtn").onclick=playCurrent;
+document.getElementById("nextBtn").onclick=()=>{
+  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  const total=sessionItems?sessionItems.length:data[currentType].length;
+  if(currentIndex<total-1){
+    currentIndex++;
+    renderQuestion();
+  }else{
+    if(sessionKind==="mock"){
+      finishMockExam();
+    }else{
+      alert(sessionKind==="daily"?"今日の学習を完了しました！":sessionKind==="mistakes"?"復習セットを完了しました！":"このセットをすべて解きました。");
+      sessionItems=null;sessionKind="single";
+      showView("home");
+    }
+  }
+};
+function finishMockExam(){
+  const total=mockAnswers.length;
+  const correct=mockAnswers.filter(x=>x.ok).length;
+  const pct=total?Math.round(correct/total*100):0;
+  const s=store.get();
+  s.mockHistory.unshift({date:Date.now(),total,correct,pct});
+  s.mockHistory=s.mockHistory.slice(0,20);
+  store.set(s);
+
+  const exp=document.getElementById("explanation");
+  document.getElementById("question").textContent=`模擬試験 結果：${correct} / ${total}（${pct}%）`;
+  document.getElementById("choices").innerHTML="";
+  document.getElementById("passage").classList.add("hidden");
+  document.getElementById("listenBox").classList.remove("show");
+  document.getElementById("quizCounter").textContent="完了";
+  document.getElementById("nextBtn").classList.add("hidden");
+
+  const rows=mockAnswers.map((x,i)=>`
+    <div class="mock-row ${x.ok?"good":"bad"}">
+      <div class="qtype">${i+1}. ${TYPE_NAMES[x.type]}</div>
+      <div style="font-weight:700;margin-top:4px">${esc(x.q)}</div>
+      <div style="margin-top:6px">あなたの回答：${esc(x.chosen)}<br>正解：<strong>${esc(x.correct)}</strong></div>
+    </div>`).join("");
+  exp.innerHTML=`<div style="font-weight:800;font-size:18px">採点結果</div><div class="mock-summary">${rows}</div>`;
+  exp.classList.add("show");
+  sessionItems=null;
+  sessionKind="single";
+  mockAnswers=[];
+}
+
+document.getElementById("homeBtn").onclick=()=>showView("home");
+
+function renderHome(){
+  const s=store.get();
+  const accuracy=s.solved?Math.round(s.correct/s.solved*100):0;
+  document.getElementById("solvedStat").textContent=s.solved;
+  document.getElementById("accuracyStat").textContent=accuracy+"%";
+  document.getElementById("mistakeStat").textContent=s.mistakes.length;
+  const key=new Date().toLocaleDateString("sv-SE");
+  const today=s.today[key]||0;
+  document.getElementById("goalStat").textContent=`${Math.min(today,15)}/15`;
+  document.getElementById("goalBar").style.width=`${Math.min(today/15*100,100)}%`;
+  document.getElementById("todayText").textContent=new Date().toLocaleDateString("ja-JP",{year:"numeric",month:"long",day:"numeric"});
+}
+
+function renderMistakes(){
+  const s=store.get(),box=document.getElementById("mistakeList");
+  box.innerHTML="";
+  if(!s.mistakes.length){
+    box.innerHTML='<div class="card empty">まだ保存された間違いはありません。</div>';
+    return;
+  }
+  s.mistakes.forEach(m=>{
+    const div=document.createElement("div");
+    div.className="card mistake";
+    div.innerHTML=`
+      <div class="mistake-main">
+        <div class="qtype">${TYPE_NAMES[m.type]}</div>
+        <div class="mistake-q">${esc(m.q)}</div>
+        <div style="margin-top:10px;line-height:1.7">
+          正解：<strong>${esc(m.correct)}</strong><br>
+          前回の回答：${esc(m.chosen||"-")}<br><br>${esc(m.explanation)}
+        </div>
+        <div class="mistake-meta">間違えた回数 ${m.count}回</div>
+      </div>
+      <button class="secondary" data-remove="${encodeURIComponent(m.id)}">削除</button>
+    `;
+    box.appendChild(div);
+  });
+  box.querySelectorAll("[data-remove]").forEach(btn=>{
+    btn.onclick=()=>{
+      const id=decodeURIComponent(btn.dataset.remove);
+      const s2=store.get();
+      s2.mistakes=s2.mistakes.filter(m=>m.id!==id);
+      store.set(s2);
+      renderMistakes();
+      renderHome();
+    };
+  });
+}
+
+function renderWordbook(){
+  const s=store.get(),box=document.getElementById("wordbookList");
+  box.innerHTML="";
+  if(!s.favorites.length){
+    box.innerHTML='<div class="card empty" style="grid-column:1/-1">まだ保存した単語がありません。問題の解説で ☆ を押して追加できます。</div>';
+    return;
+  }
+  s.favorites.forEach((w,i)=>{
+    const div=document.createElement("div");
+    div.className="card word-card";
+    div.innerHTML=`<div style="font-size:24px;font-weight:900">${esc(w.word)}</div>
+      <div style="margin-top:8px">${esc(w.meaning)}</div>
+      <div class="label" style="margin-top:8px">発音メモ [${esc(w.pron)}]</div>
+      <button class="secondary" data-wremove="${i}" style="margin-top:14px">削除</button>`;
+    box.appendChild(div);
+  });
+  box.querySelectorAll("[data-wremove]").forEach(btn=>btn.onclick=()=>{
+    const s2=store.get();s2.favorites.splice(Number(btn.dataset.wremove),1);store.set(s2);renderWordbook();
+  });
+}
+
+function renderStats(){
+  const s=store.get(),acc=s.solved?Math.round(s.correct/s.solved*100):0;
+  document.getElementById("stSolved").textContent=s.solved;
+  document.getElementById("stCorrect").textContent=s.correct;
+  document.getElementById("stAcc").textContent=acc+"%";
+  document.getElementById("stMistakes").textContent=s.mistakes.length;
+  const labels={vocab:"単語",grammar:"文法",reading:"読解",listening:"聴解"};
+  document.getElementById("typeStats").innerHTML=Object.entries(s.byType).map(([k,v])=>{
+    const p=v.solved?Math.round(v.correct/v.solved*100):0;
+    return `<div class="card type-stat"><div class="label">${labels[k]}</div><strong>${p}%</strong><div class="label" style="margin-top:6px">${v.correct}/${v.solved} 正解</div></div>`;
+  }).join("");
+}
+
+document.querySelectorAll("[data-view]").forEach(btn=>btn.onclick=()=>showView(btn.dataset.view));
+document.querySelectorAll("[data-start]").forEach(el=>el.onclick=()=>showView(el.dataset.start));
+document.getElementById("dailyStudyBtn").onclick=()=>{showViewDirectQuiz();startDailyStudy()};
+document.getElementById("mockStartCard").onclick=startMockExam;
+document.getElementById("retryMistakes").onclick=startMistakeReview;
+document.getElementById("dailyStudyHub").onclick=()=>{showViewDirectQuiz();startDailyStudy()};
+document.getElementById("mistakeReviewHub").onclick=startMistakeReview;
+document.getElementById("mockStartHub").onclick=startMockExam;
+
+document.querySelectorAll("[data-mini]").forEach(btn=>{
+  btn.onclick=()=>{
+    const [w,m,p]=btn.dataset.mini.split("|");
+    document.getElementById("miniGloss").innerHTML=`<strong>${esc(w)}</strong><br>意味：${esc(m)}<br>発音メモ：<strong>[${esc(p)}]</strong>`;
+  };
+});
+
+document.getElementById("clearWordbook").onclick=()=>{
+  if(confirm("単語帳をすべて削除しますか？")){
+    const s=store.get();s.favorites=[];store.set(s);renderWordbook();
+  }
+};
+document.getElementById("clearMistakes").onclick=()=>{
+  if(confirm("間違いノートをすべて削除しますか？")){
+    const s=store.get();s.mistakes=[];store.set(s);renderMistakes();renderHome();
+  }
+};
+document.getElementById("resetAll").onclick=()=>{
+  if(confirm("すべての学習記録を初期化しますか？")){
+    localStorage.removeItem(STORE_KEY);renderHome();renderStats();
+  }
+};
+
+const themeBtn=document.getElementById("themeBtn");
+function applyTheme(){
+  const dark=localStorage.getItem(THEME_KEY)==="dark";
+  document.body.classList.toggle("dark",dark);
+  themeBtn.textContent=dark?"☀️ ライトモード":"🌙 ダークモード";
+  const mt=document.getElementById("mobileThemeBtn");
+  if(mt) mt.textContent=dark?"☀":"◐";
+}
+themeBtn.onclick=()=>{
+  const dark=!document.body.classList.contains("dark");
+  localStorage.setItem(THEME_KEY,dark?"dark":"light");
+  applyTheme();
+};
+document.getElementById("mobileThemeBtn").onclick=themeBtn.onclick;
+
+applyTheme();
+renderHome();
+
+// iPhone / Safari: remove delayed ghost taps and preserve safe mobile behavior.
+document.addEventListener("touchstart",()=>{}, {passive:true});
+
+if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js").catch(()=>{}));
+}
+
+</script>
+
+<nav class="bottom-nav" aria-label="メインメニュー">
+  <button data-view="home" class="active"><span>🏠</span>ホーム</button>
+  <button data-view="learning"><span>📚</span>学習</button>
+  <button data-view="topik"><span>🎯</span>TOPIK</button>
+  <button data-view="wordbook"><span>⭐</span>単語帳</button>
+  <button data-view="stats"><span>📊</span>記録</button>
+</nav>
+
+</body>
+</html>
