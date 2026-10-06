@@ -1,5 +1,5 @@
-const CACHE='topik-v100';
-const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png'];
+const CACHE='topik-v110';
+const ASSETS=['./','./index.html','./manifest.webmanifest','./icon-192.png','./icon-512.png','./apple-touch-icon.png','./questions-extra.js'];
 
 self.addEventListener('install',event=>{
   self.skipWaiting();
