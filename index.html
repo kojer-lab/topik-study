@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.4</title>
+<title>TOPIK I · 2級 Study v1.5</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -229,6 +229,16 @@ h1{font-size:30px;margin:0}
 .srs-stat strong{display:block;font-size:23px;line-height:1.1}
 .srs-stat span{display:block;margin-top:5px;color:var(--muted);font-size:11px}
 .srs-dashboard .primary{width:100%;min-height:54px;font-size:16px}
+.srs-setting{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  margin:0 0 14px;padding:12px 13px;border:1px solid var(--line);border-radius:13px;
+  background:var(--panel)
+}
+.srs-setting label{font-size:13px;font-weight:800;line-height:1.45}
+.srs-setting select{
+  min-width:105px;min-height:42px;border:1px solid var(--line);border-radius:11px;
+  background:var(--panel);color:var(--text);padding:0 10px;font-weight:800
+}
 .srs-note{margin-top:10px;color:var(--muted);font-size:12px;line-height:1.6}
 .srs-review{display:grid;gap:12px}
 .srs-review-head{display:flex;align-items:center;justify-content:space-between;gap:10px}
@@ -497,7 +507,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.4は単語300語に間隔反復（SRS）カード復習を追加した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.5は1日の新規単語数設定と単語一覧のランダム表示を追加した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -595,7 +605,7 @@ main{
 
 <section id="wordbookView" class="hidden">
   <div class="topbar">
-    <div><h1>単語</h1><div class="sub">TOPIK I 基礎300語。毎日10個の新しい単語＋復習予定の単語を、間隔反復で覚えます。</div></div>
+    <div><h1>単語</h1><div class="sub">TOPIK I 基礎300語。新しい単語数を自分で決めて、復習予定の単語と一緒に間隔反復で覚えます。</div></div>
   </div>
 
   <div id="vocabDashboard" class="srs-dashboard">
@@ -605,6 +615,16 @@ main{
       <div class="srs-stat"><strong id="srsDueCount">0</strong><span>今日の復習</span></div>
       <div class="srs-stat"><strong id="srsNewCount">0</strong><span>新しい単語</span></div>
       <div class="srs-stat"><strong id="srsMasteredCount">0</strong><span>定着</span></div>
+    </div>
+    <div class="srs-setting">
+      <label for="vocabNewPerDay">1日の新しい単語</label>
+      <select id="vocabNewPerDay">
+        <option value="5">5語</option>
+        <option value="10">10語</option>
+        <option value="15">15語</option>
+        <option value="20">20語</option>
+        <option value="30">30語</option>
+      </select>
     </div>
     <button class="primary" id="startVocabReview">今日の復習を始める</button>
     <div class="srs-note" id="srsDashboardNote">新しい単語は1日最大10個。復習期限が来た単語はすべて今日のセットに入ります。</div>
@@ -813,11 +833,11 @@ const TYPE_NAMES={
 
 const STORE_KEY="topik1Level2StudyV04";
 const THEME_KEY="topik1Level2Theme";
-const STATE_SCHEMA_VERSION=4;
+const STATE_SCHEMA_VERSION=5;
 function blankState(){
   return {
     schemaVersion:STATE_SCHEMA_VERSION,
-    solved:0,correct:0,mistakes:[],favorites:[],today:{},progress:{},dailyPlans:{},vocabSrs:{},
+    solved:0,correct:0,mistakes:[],favorites:[],today:{},progress:{},dailyPlans:{},vocabSrs:{},vocabSettings:{newPerDay:10},
     byType:{
       vocab:{solved:0,correct:0},
       grammar:{solved:0,correct:0},
@@ -850,6 +870,9 @@ function normalizeState(s){
   b.progress=(s.progress&&typeof s.progress==="object")?s.progress:{};
   b.dailyPlans=(s.dailyPlans&&typeof s.dailyPlans==="object")?s.dailyPlans:{};
   b.vocabSrs=(s.vocabSrs&&typeof s.vocabSrs==="object")?s.vocabSrs:{};
+  const allowedNewCounts=[5,10,15,20,30];
+  const requestedNewCount=Number(s.vocabSettings?.newPerDay??10);
+  b.vocabSettings={newPerDay:allowedNewCounts.includes(requestedNewCount)?requestedNewCount:10};
   b.mockHistory=Array.isArray(s.mockHistory)?s.mockHistory:[];
   for(const k of Object.keys(b.byType)){
     b.byType[k]=Object.assign(b.byType[k],(s.byType||{})[k]||{});
@@ -887,7 +910,7 @@ function showView(name){
     startQuiz(name);
   }
   if(name==="review"){views.review.classList.remove("hidden");renderMistakes()}
-  if(name==="wordbook"){views.wordbook.classList.remove("hidden");renderWordbook()}
+  if(name==="wordbook"){views.wordbook.classList.remove("hidden");shuffleVocabBrowseOrder();renderWordbook()}
   if(name==="stats"){views.stats.classList.remove("hidden");renderStats()}
   document.querySelectorAll(".nav button,.bottom-nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
   window.scrollTo({top:0,behavior:"smooth"});
@@ -1376,6 +1399,15 @@ let vocabReviewQueue=[],vocabReviewDone=0,vocabReviewTotal=0,vocabReviewCurrent=
 function vocabCatalog(){
   return Array.isArray(window.VOCAB_CATALOG)?window.VOCAB_CATALOG:[];
 }
+function getVocabNewPerDay(){
+  return Number(store.get().vocabSettings?.newPerDay||10);
+}
+function setVocabNewPerDay(value){
+  const allowed=[5,10,15,20,30],n=Number(value);
+  const s=store.get();
+  s.vocabSettings={...(s.vocabSettings||{}),newPerDay:allowed.includes(n)?n:10};
+  store.set(s);
+}
 function localDay(){
   return new Date().toLocaleDateString("sv-SE");
 }
@@ -1399,7 +1431,8 @@ function getVocabSrsSummary(){
   const due=catalog.filter(w=>states[w.id]&&Number(states[w.id].dueAt||0)<=now);
   const introducedToday=catalog.filter(w=>states[w.id]?.firstSeenDay===day).length;
   const unseen=catalog.filter(w=>!states[w.id]);
-  const newCount=Math.min(Math.max(0,10-introducedToday),unseen.length);
+  const newPerDay=getVocabNewPerDay();
+  const newCount=Math.min(Math.max(0,newPerDay-introducedToday),unseen.length);
   const mastered=catalog.filter(w=>states[w.id]?.status==="mastered").length;
   const learned=catalog.filter(w=>states[w.id]).length;
   return {dueCount:due.length,newCount,mastered,learned,unseen:unseen.length};
@@ -1409,12 +1442,14 @@ function renderVocabDashboard(){
   document.getElementById("srsDueCount").textContent=x.dueCount;
   document.getElementById("srsNewCount").textContent=x.newCount;
   document.getElementById("srsMasteredCount").textContent=x.mastered;
+  const newPerDay=getVocabNewPerDay();
+  document.getElementById("vocabNewPerDay").value=String(newPerDay);
   const btn=document.getElementById("startVocabReview");
   const total=x.dueCount+x.newCount;
   btn.disabled=total===0;
   btn.textContent=total?(`今日の復習を始める · ${total}枚`):"今日の学習は完了しました ✓";
   document.getElementById("srsDashboardNote").textContent=
-    `学習開始 ${x.learned}/${vocabCatalog().length}語 · 未学習 ${x.unseen}語 · 新規は1日最大10語`;
+    `学習開始 ${x.learned}/${vocabCatalog().length}語 · 未学習 ${x.unseen}語 · 新規は1日最大${newPerDay}語`;
 }
 function buildVocabReviewQueue(){
   const catalog=vocabCatalog(),s=store.get(),now=Date.now(),day=localDay(),states=s.vocabSrs||{};
@@ -1422,7 +1457,7 @@ function buildVocabReviewQueue(){
     .filter(w=>states[w.id]&&Number(states[w.id].dueAt||0)<=now)
     .sort((a,b)=>Number(states[a.id].dueAt||0)-Number(states[b.id].dueAt||0));
   const introducedToday=catalog.filter(w=>states[w.id]?.firstSeenDay===day).length;
-  const allowance=Math.max(0,10-introducedToday);
+  const allowance=Math.max(0,getVocabNewPerDay()-introducedToday);
   const unseen=seededShuffle(catalog.filter(w=>!states[w.id]),day+"-vocab-srs").slice(0,allowance);
   return [...due,...unseen];
 }
@@ -1516,6 +1551,15 @@ function rateVocabCard(rating){
 }
 
 let vocabFilter="all";
+let vocabBrowseOrder=[];
+function shuffleVocabBrowseOrder(){
+  const ids=vocabCatalog().map(w=>w.id);
+  for(let i=ids.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [ids[i],ids[j]]=[ids[j],ids[i]];
+  }
+  vocabBrowseOrder=ids;
+}
 function toggleFavoriteEntry(entry){
   const s=store.get();
   const pos=s.favorites.findIndex(x=>x.word===entry.word);
@@ -1533,7 +1577,10 @@ function renderWordbook(){
   const s=store.get();
   const savedSet=new Set(s.favorites.map(x=>x.word));
   const catalog=Array.isArray(window.VOCAB_CATALOG)?window.VOCAB_CATALOG:[];
-  let rows=catalog.filter(w=>{
+  const byId=new Map(catalog.map(w=>[w.id,w]));
+  if(vocabBrowseOrder.length!==catalog.length)shuffleVocabBrowseOrder();
+  const orderedCatalog=vocabBrowseOrder.map(id=>byId.get(id)).filter(Boolean);
+  let rows=orderedCatalog.filter(w=>{
     if(vocabFilter==="saved"&&!savedSet.has(w.word))return false;
     if(!q)return true;
     return [w.word,w.meaning,w.sentence,w.sentenceJp].some(x=>String(x).toLowerCase().includes(q));
@@ -1542,7 +1589,7 @@ function renderWordbook(){
   document.getElementById("vocabAllBtn").textContent=`すべて ${catalog.length}`;
   document.getElementById("vocabSavedBtn").classList.toggle("active",vocabFilter==="saved");
   document.getElementById("vocabSavedBtn").textContent=`⭐ 保存済み ${savedSet.size}`;
-  document.getElementById("vocabCount").textContent=`${rows.length}語を表示中 · 単語をタップするだけでなく、例文ごと声に出して覚えましょう。`;
+  document.getElementById("vocabCount").textContent=`${rows.length}語を表示中 · 単語タブを開くたびに一覧の順番がランダムに変わります。`;
   box.innerHTML="";
   if(!rows.length){
     box.innerHTML='<div class="card empty">条件に合う単語がありません。</div>';
@@ -1617,6 +1664,10 @@ document.querySelectorAll("[data-mini]").forEach(btn=>{
   };
 });
 
+document.getElementById("vocabNewPerDay").onchange=(e)=>{
+  setVocabNewPerDay(e.target.value);
+  renderVocabDashboard();
+};
 document.getElementById("startVocabReview").onclick=startVocabSrs;
 document.getElementById("exitVocabReview").onclick=exitVocabSrs;
 document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
@@ -1711,7 +1762,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=140",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=150",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
