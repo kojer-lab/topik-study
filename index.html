@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v0.5.1</title>
+<title>TOPIK I · 2級 Study v0.6</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -417,7 +417,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v0.5.1はiPhone下部メニューのタップ不具合を修正した学習版です。実際のTOPIK問題を転載したものではありません。
+    ※ v0.6は問題ID・データ移行・バックアップ/復元を追加した構造完成版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -531,7 +531,16 @@ main{
   </div>
   <div class="section-title">分野別</div><div id="typeStats" class="type-stats"></div>
   <div class="section-title">データ管理</div>
-  <div class="card"><button class="secondary" id="resetAll">学習記録をすべて初期化</button></div>
+  <div class="card">
+    <div style="font-weight:800;margin-bottom:6px">学習データのバックアップ</div>
+    <div class="sub" style="margin:0 0 14px">進捗・間違いノート・単語帳をJSONファイルに保存できます。機種変更時にも復元できます。</div>
+    <div style="display:grid;gap:10px">
+      <button class="primary" id="backupData">バックアップを書き出す</button>
+      <button class="secondary" id="restoreData">バックアップから復元</button>
+      <input class="hidden" type="file" id="restoreInput" accept=".json,application/json">
+      <button class="secondary" id="resetAll">学習記録をすべて初期化</button>
+    </div>
+  </div>
 </section>
 </main>
 </div>
@@ -589,6 +598,18 @@ listening:[
 ]
 };
 
+// Stable problem IDs. Existing question order must not be changed; new questions are appended.
+const PROBLEM_PREFIX={vocab:"V",grammar:"G",reading:"R",listening:"L"};
+for(const [type,items] of Object.entries(data)){
+  items.forEach((item,index)=>{
+    if(!item.id)item.id=`${PROBLEM_PREFIX[type]}${String(index+1).padStart(3,"0")}`;
+  });
+}
+function findProblem(type,problemId,q){
+  const items=data[type]||[];
+  return items.find(x=>x.id===problemId) || items.find(x=>x.q===q) || null;
+}
+
 const TYPE_NAMES={
   vocab:"単語 / 어휘",
   grammar:"文法 / 문법",
@@ -598,8 +619,10 @@ const TYPE_NAMES={
 
 const STORE_KEY="topik1Level2StudyV04";
 const THEME_KEY="topik1Level2Theme";
+const STATE_SCHEMA_VERSION=2;
 function blankState(){
   return {
+    schemaVersion:STATE_SCHEMA_VERSION,
     solved:0,correct:0,mistakes:[],favorites:[],today:{},
     byType:{
       vocab:{solved:0,correct:0},
@@ -613,9 +636,21 @@ function blankState(){
 function normalizeState(s){
   const b=blankState();
   s=s||{};
+  b.schemaVersion=STATE_SCHEMA_VERSION;
   b.solved=Number(s.solved||0);
   b.correct=Number(s.correct||0);
-  b.mistakes=Array.isArray(s.mistakes)?s.mistakes:[];
+  b.mistakes=(Array.isArray(s.mistakes)?s.mistakes:[]).map(m=>{
+    const found=findProblem(m.type,m.problemId||m.id,m.q);
+    const pid=found?.id || m.problemId || m.id;
+    return {
+      ...m,
+      id:pid,
+      problemId:pid,
+      q:found?.q || m.q,
+      correct:found?.c?.[found.a] || m.correct,
+      explanation:found?.e || m.explanation
+    };
+  });
   b.favorites=Array.isArray(s.favorites)?s.favorites:[];
   b.today=s.today||{};
   b.mockHistory=Array.isArray(s.mockHistory)?s.mockHistory:[];
@@ -631,6 +666,7 @@ const store={
   },
   set(v){localStorage.setItem(STORE_KEY,JSON.stringify(normalizeState(v)))}
 };
+store.set(store.get());
 
 let currentType="vocab",currentIndex=0,answered=false,order=[],speech=null,quizMode="study",currentDisplayChoices=[],currentCorrectDisplayIndex=0,sessionItems=null,sessionKind="single",mockAnswers=[];
 const views={
@@ -707,7 +743,7 @@ function startMistakeReview(){
   const s=store.get();
   const items=[];
   for(const m of s.mistakes){
-    const idx=data[m.type]?.findIndex(x=>x.q===m.q) ?? -1;
+    const idx=data[m.type]?.findIndex(x=>x.id===(m.problemId||m.id) || x.q===m.q) ?? -1;
     if(idx>=0) items.push({type:m.type,index:idx});
   }
   if(!items.length){alert("復習できる間違い問題がありません。");return;}
@@ -849,20 +885,20 @@ function answer(idx){
   const key=new Date().toLocaleDateString("sv-SE");
   s.today[key]=(s.today[key]||0)+1;
 
+  const problemId=item.id;
   if(isCorrect && sessionKind==="mistakes"){
-    const id=`${currentType}-${item.q}`;
-    s.mistakes=s.mistakes.filter(m=>m.id!==id);
+    s.mistakes=s.mistakes.filter(m=>(m.problemId||m.id)!==problemId);
   }
   if(!isCorrect){
-    const id=`${currentType}-${item.q}`;
-    const existing=s.mistakes.find(m=>m.id===id);
+    const id=problemId;
+    const existing=s.mistakes.find(m=>(m.problemId||m.id)===id);
     if(existing){
       existing.count++;
       existing.last=Date.now();
       existing.chosen=currentDisplayChoices[idx];
     }else{
       s.mistakes.unshift({
-        id,type:currentType,q:item.q,correct:item.c[item.a],chosen:currentDisplayChoices[idx],
+        id,problemId:id,type:currentType,q:item.q,correct:item.c[item.a],chosen:currentDisplayChoices[idx],
         explanation:item.e,count:1,last:Date.now()
       });
     }
@@ -1131,6 +1167,55 @@ document.getElementById("clearMistakes").onclick=()=>{
     const s=store.get();s.mistakes=[];store.set(s);renderMistakes();renderHome();
   }
 };
+function exportStudyData(){
+  const payload={
+    app:"topik-study",
+    schemaVersion:STATE_SCHEMA_VERSION,
+    exportedAt:new Date().toISOString(),
+    state:store.get(),
+    theme:localStorage.getItem(THEME_KEY)||"light"
+  };
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement("a");
+  const day=new Date().toLocaleDateString("sv-SE");
+  a.href=url;
+  a.download=`topik-study-backup-${day}.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+}
+
+function restoreStudyData(file){
+  const reader=new FileReader();
+  reader.onload=()=>{
+    try{
+      const payload=JSON.parse(String(reader.result||""));
+      if(payload.app!=="topik-study" || !payload.state)throw new Error("invalid");
+      if(!confirm("現在の学習データをこのバックアップで置き換えますか？"))return;
+      store.set(payload.state);
+      if(payload.theme==="dark"||payload.theme==="light")localStorage.setItem(THEME_KEY,payload.theme);
+      applyTheme();
+      renderHome();
+      renderStats();
+      alert("学習データを復元しました。");
+    }catch(e){
+      alert("このファイルはTOPIK Studyのバックアップとして読み込めません。");
+    }finally{
+      document.getElementById("restoreInput").value="";
+    }
+  };
+  reader.readAsText(file);
+}
+
+document.getElementById("backupData").onclick=exportStudyData;
+document.getElementById("restoreData").onclick=()=>document.getElementById("restoreInput").click();
+document.getElementById("restoreInput").onchange=(e)=>{
+  const file=e.target.files?.[0];
+  if(file)restoreStudyData(file);
+};
+
 document.getElementById("resetAll").onclick=()=>{
   if(confirm("すべての学習記録を初期化しますか？")){
     localStorage.removeItem(STORE_KEY);renderHome();renderStats();
@@ -1159,7 +1244,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=051",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=060",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
