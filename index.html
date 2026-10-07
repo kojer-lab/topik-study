@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.14.1</title>
+<title>TOPIK I · 2級 Study v1.15</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -827,6 +827,7 @@ main{
 <script src="./questions-training-01.js?v=1410"></script>
 <script src="./questions-training-02.js?v=1410"></script>
 <script src="./questions-training-03.js?v=1410"></script>
+<script src="./tts/manifest.js?v=1500"></script>
 <script>
 const data={
 vocab:[
@@ -1033,7 +1034,7 @@ function showView(name){
     studyModeBtn.disabled=false;testModeBtn.disabled=false;
     sessionItems=null;sessionKind="single";mockAnswers=[];
   }
-  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  stopKoreanAudio();
   Object.values(views).forEach(v=>v.classList.add("hidden"));
   if(name==="home") views.home.classList.remove("hidden");
   if(name==="learning") views.learning.classList.remove("hidden");
@@ -1420,7 +1421,25 @@ function answer(idx){
   renderHome();
 }
 
-function speakKorean(text,rate=0.9){
+// Neural clips are synthesized on GitHub Actions, then served by GitHub Pages.
+// Tapping audio stays synchronous on iPhone Safari; unsupported clips use native speech.
+let activeNeuralAudio=null;
+function koreanAudioHash(text){
+  let h=2166136261;
+  text=String(text).trim();
+  for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619)}
+  return (h>>>0).toString(16).padStart(8,"0")+"-"+text.length;
+}
+function stopKoreanAudio(){
+  if(activeNeuralAudio){
+    activeNeuralAudio.pause();
+    activeNeuralAudio.removeAttribute("src");
+    activeNeuralAudio.load();
+    activeNeuralAudio=null;
+  }
+  if("speechSynthesis" in window)window.speechSynthesis.cancel();
+}
+function nativeKoreanSpeech(text,rate){
   if(!("speechSynthesis" in window)){
     alert("このブラウザでは韓国語音声の読み上げに対応していません。");
     return;
@@ -1434,6 +1453,28 @@ function speakKorean(text,rate=0.9){
   const ko=voices.find(v=>String(v.lang).toLowerCase().startsWith("ko"));
   if(ko)speech.voice=ko;
   window.speechSynthesis.speak(speech);
+}
+function speakKorean(text,rate=0.9){
+  text=String(text||"").trim();
+  if(!text)return;
+  stopKoreanAudio();
+  const key=koreanAudioHash(text);
+  const available=window.TOPIK_NEURAL_HASHES||[];
+  if(available.includes(key)){
+    const audio=new Audio("./tts/ko/"+key+".mp3");
+    activeNeuralAudio=audio;
+    audio.preload="auto";
+    audio.playbackRate=Math.max(0.6,Math.min(1.4,Number(rate)||0.9));
+    audio.onended=()=>{if(activeNeuralAudio===audio)activeNeuralAudio=null};
+    audio.onerror=()=>{
+      if(activeNeuralAudio===audio){activeNeuralAudio=null;nativeKoreanSpeech(text,rate)}
+    };
+    audio.play().catch(()=>{
+      if(activeNeuralAudio===audio){activeNeuralAudio=null;nativeKoreanSpeech(text,rate)}
+    });
+    return;
+  }
+  nativeKoreanSpeech(text,rate);
 }
 function playCurrent(){
   if(currentType!=="listening")return;
@@ -1461,7 +1502,7 @@ hintBtn.onclick=()=>hintBox.classList.toggle("show");
 
 document.getElementById("playBtn").onclick=playCurrent;
 document.getElementById("nextBtn").onclick=()=>{
-  if("speechSynthesis" in window) window.speechSynthesis.cancel();
+  stopKoreanAudio();
   const total=sessionItems?sessionItems.length:data[currentType].length;
   if(currentIndex<total-1){
     currentIndex++;
@@ -1478,7 +1519,7 @@ document.getElementById("nextBtn").onclick=()=>{
 };
 function finishMockExam(timeUp=false){
   stopMockTimer();
-  if("speechSynthesis" in window)window.speechSynthesis.cancel();
+  stopKoreanAudio();
   studyModeBtn.disabled=false;testModeBtn.disabled=false;
   const total=70;
   const answeredCount=mockAnswers.length;
@@ -1742,6 +1783,8 @@ function renderVocabDashboard(){
   document.getElementById("srsDashboardNote").textContent=
     "学習開始 "+x.learned+"/"+vocabCatalog().length+"語 · 未学習 "+x.unseen+"語 · 保留 "+x.suspended+"語 · 新規は1日最大"+newPerDay+"語";
   renderSrsCalendar();
+  const status=window.TOPIK_NEURAL_HASHES?.length||0;
+  document.getElementById("srsDashboardNote").textContent+=status?" · AI音声 "+status+"件対応":" · AI音声は生成準備中（未生成の音は端末音声）";
 }
 
 function buildVocabReviewQueue(){
@@ -2224,7 +2267,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1410",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1500",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
