@@ -138,7 +138,7 @@ h1{font-size:30px;margin:0}
 }
 .listenbox.show{display:block}
 .listen-controls{
-  display:grid;grid-template-columns:minmax(0,1fr) auto 48px;gap:8px;align-items:center
+  display:grid;grid-template-columns:minmax(0,1fr) 48px 92px;gap:8px;align-items:center
 }
 .listen-btn{
   border:0;background:var(--accent);color:white;padding:10px 14px;border-radius:10px;
@@ -150,6 +150,7 @@ h1{font-size:30px;margin:0}
 }
 .restart-btn:active{background:var(--accent2);transform:scale(.97)}
 .speed{
+  width:92px;box-sizing:border-box;
   border:1px solid var(--line);background:var(--panel);color:var(--text);
   border-radius:10px;padding:9px 10px;min-height:44px
 }
