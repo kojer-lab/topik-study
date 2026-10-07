@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.14</title>
+<title>TOPIK I · 2級 Study v1.14.1</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -558,7 +558,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.14は1,500語（全語に例文2つ）と全800問の練習問題を収録。模擬試験は練習用の点数換算です。
+    ※ v1.14.1は1,500語（全語に例文2つ）と全800問の練習問題を収録。模擬試験は練習用の点数換算です。
   </div>
 </section>
 
@@ -811,22 +811,22 @@ main{
 <script src="./vocab-examples-301-400.js?v=1201"></script>
 <script src="./vocab-examples-401-500.js?v=1201"></script>
 <script src="./vocab-examples-001-100.js?v=1201"></script>
-<script src="./vocab-examples-101-200.js?v=1201"></script>
+<script src="./vocab-examples-101-200.js?v=1410"></script>
 <script src="./vocab-examples-201-300.js?v=1201"></script>
 <script src="./vocab-examples-501-600.js?v=1201"></script>
 <script src="./vocab-examples-601-700.js?v=1201"></script>
 <script src="./vocab-examples-701-800.js?v=1201"></script>
-<script src="./vocab-upper-batch-a.js?v=1400"></script>
-<script src="./vocab-upper-batch-b.js?v=1400"></script>
-<script src="./vocab-upper-batch-c.js?v=1400"></script>
-<script src="./vocab-upper-batch-d.js?v=1400"></script>
-<script src="./vocab-upper-batch-e.js?v=1400"></script>
-<script src="./vocab-upper-batch-f.js?v=1400"></script>
-<script src="./vocab-upper-batch-g.js?v=1400"></script>
+<script src="./vocab-upper-batch-a.js?v=1410"></script>
+<script src="./vocab-upper-batch-b.js?v=1410"></script>
+<script src="./vocab-upper-batch-c.js?v=1410"></script>
+<script src="./vocab-upper-batch-d.js?v=1410"></script>
+<script src="./vocab-upper-batch-e.js?v=1410"></script>
+<script src="./vocab-upper-batch-f.js?v=1410"></script>
+<script src="./vocab-upper-batch-g.js?v=1410"></script>
 <script src="./questions-exam.js?v=190"></script>
-<script src="./questions-training-01.js?v=1400"></script>
-<script src="./questions-training-02.js?v=1400"></script>
-<script src="./questions-training-03.js?v=1400"></script>
+<script src="./questions-training-01.js?v=1410"></script>
+<script src="./questions-training-02.js?v=1410"></script>
+<script src="./questions-training-03.js?v=1410"></script>
 <script>
 const data={
 vocab:[
@@ -2224,7 +2224,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1400",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1410",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
