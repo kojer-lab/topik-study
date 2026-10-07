@@ -65,6 +65,27 @@ for(const item of selectedListening){
   addUtterance({key:hash(text),text,kind:'dialogue',segments});
 }
 
+// Quiz explanation vocabulary comes next, so the small pronunciation buttons
+// in answer feedback get neural audio before the remaining 1,500-word corpus.
+const questionBanks=[
+  initialBank,
+  ctx.window.EXTRA_QUESTIONS,
+  ctx.window.EXAM_QUESTIONS,
+  ctx.window.TRAINING_QUESTIONS_1,
+  ctx.window.TRAINING_QUESTIONS_2,
+  ctx.window.TRAINING_QUESTIONS_3
+].filter(Boolean);
+for(const bank of questionBanks){
+  for(const type of ['vocab','grammar','reading','listening']){
+    for(const item of (bank[type]||[])){
+      for(const g of (item.v||[])){
+        const text=String(Array.isArray(g)?g[0]:"").trim();
+        if(text)addUtterance({key:hash(text),text,kind:'gloss'});
+      }
+    }
+  }
+}
+
 for (const v of catalog) {
   const id = Number(v.id.slice(1));
   if (id < start || id > end) continue;
