@@ -257,6 +257,11 @@ h1{font-size:30px;margin:0}
 .vocab-stage.active{border-color:var(--accent);background:var(--accent2)}
 .vocab-bank-note{font-size:11px;color:var(--muted);margin-top:9px;line-height:1.55}
 .vocab-tier-badge{display:inline-flex;margin-top:6px;padding:3px 7px;border-radius:999px;background:var(--accent2);color:var(--accent);font-size:10px;font-weight:900}
+.vocab-jp-toggle{
+  display:inline-flex;align-items:center;margin-top:8px;border:0;background:transparent;color:var(--accent);
+  padding:0;font-size:12px;font-weight:800;cursor:pointer
+}
+.vocab-jp-toggle:active{opacity:.65}
 
 .srs-dashboard-sub{color:var(--muted);font-size:13px;line-height:1.6}
 .srs-stats{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:14px 0}
@@ -2088,7 +2093,7 @@ function renderWordbook(){
     const saved=savedSet.has(w.word);
     const state=s.vocabSrs?.[w.id];
     const badges=[];
-    const secondExampleHTML=w.sentence2?'<div class="vocab-example"><div class="example-tag">例文 2</div><div class="vocab-ko-audio-line"><div class="ko">'+esc(w.sentence2)+'</div><button type="button" class="inline-audio-btn" data-vspeak-sentence2="'+esc(w.id)+'" aria-label="例文2を聞く" title="例文2を聞く">🔊</button></div><div class="jp">'+esc(w.sentenceJp2||"")+'</div></div>':"";
+    const secondExampleHTML=w.sentence2?'<div class="vocab-example"><div class="example-tag">例文 2</div><div class="vocab-ko-audio-line"><div class="ko">'+esc(w.sentence2)+'</div><button type="button" class="inline-audio-btn" data-vspeak-sentence2="'+esc(w.id)+'" aria-label="例文2を聞く" title="例文2を聞く">🔊</button></div><button type="button" class="vocab-jp-toggle" data-vtranslation="sentence2">日本語訳を見る</button><div class="jp hidden" data-vtranslation-target="sentence2">'+esc(w.sentenceJp2||"")+'</div></div>':"";
     const pronHTML=(w.pron&&w.pron!==w.word)?'<div class="vocab-pron">発音メモ ['+esc(w.pron)+']</div>':'';
     if(state?.suspended)badges.push('<span class="srs-badge suspended">⏸ 保留</span>');
     if(state?.manualMastered||state?.status==="mastered")badges.push('<span class="srs-badge mastered">✓ 定着</span>');
@@ -2099,7 +2104,8 @@ function renderWordbook(){
       <div class="vocab-head">
         <div>
           <div class="vocab-word-line"><div class="vocab-word">${esc(w.word)}</div><button type="button" class="inline-audio-btn" data-vspeak-word="${esc(w.id)}" aria-label="単語の発音を聞く" title="単語の発音を聞く">🔊</button></div>
-          <div class="vocab-meaning">${esc(w.meaning)}</div>
+          <button type="button" class="vocab-jp-toggle" data-vtranslation="meaning">意味を見る</button>
+          <div class="vocab-meaning hidden" data-vtranslation-target="meaning">${esc(w.meaning)}</div>
           ${pronHTML}
           <div class="vocab-tier-badge">${esc(vocabTier(w).label)}</div>
           <div class="srs-list-meta">${badges.join("")}</div>
@@ -2112,7 +2118,8 @@ function renderWordbook(){
           <div class="ko">${esc(w.sentence)}</div>
           <button type="button" class="inline-audio-btn" data-vspeak-sentence="${esc(w.id)}" aria-label="例文1を聞く" title="例文1を聞く">🔊</button>
         </div>
-        <div class="jp">${esc(w.sentenceJp)}</div>
+        <button type="button" class="vocab-jp-toggle" data-vtranslation="sentence1">日本語訳を見る</button>
+        <div class="jp hidden" data-vtranslation-target="sentence1">${esc(w.sentenceJp)}</div>
       </div>
       ${secondExampleHTML}
       ${state?.suspended||state?.manualMastered?'<div class="vocab-actions"><button class="secondary" data-vresume="'+esc(w.id)+'">↩ 復習へ戻す</button></div>':""}`;
@@ -2122,6 +2129,18 @@ function renderWordbook(){
   box.querySelectorAll("[data-vstar]").forEach(btn=>btn.onclick=()=>{
     const w=catalog.find(x=>x.id===btn.dataset.vstar);if(!w)return;
     toggleFavoriteEntry(w);renderWordbook();
+  });
+  box.querySelectorAll("[data-vtranslation]").forEach(btn=>btn.onclick=(ev)=>{
+    ev.stopPropagation();
+    const card=btn.closest(".vocab-card");
+    const key=btn.dataset.vtranslation;
+    const target=card?.querySelector('[data-vtranslation-target="'+key+'"]');
+    if(!target)return;
+    const willShow=target.classList.contains("hidden");
+    target.classList.toggle("hidden",!willShow);
+    btn.textContent=willShow
+      ?(key==="meaning"?"意味を隠す":"日本語訳を隠す")
+      :(key==="meaning"?"意味を見る":"日本語訳を見る");
   });
   box.querySelectorAll("[data-vspeak-word]").forEach(btn=>btn.onclick=()=>{
     const w=catalog.find(x=>x.id===btn.dataset.vspeakWord);if(w)speakKorean(w.word,1,{cacheTag:"vocab-v1",allowNativeFallback:false});
