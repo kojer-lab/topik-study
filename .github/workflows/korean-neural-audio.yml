@@ -28,6 +28,11 @@ on:
       - '.github/workflows/korean-neural-audio.yml'
       - 'scripts/export-korean-audio.cjs'
       - 'scripts/generate-korean-audio.py'
+      - 'questions-training-03.js'
+      - 'questions-training-02.js'
+      - 'questions-training-01.js'
+      - 'questions-exam.js'
+      - 'questions-extra.js'
 
 permissions:
   contents: write
