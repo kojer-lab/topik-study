@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.11.1</title>
+<title>TOPIK I · 2級 Study v1.12</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -558,7 +558,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.11はV301〜V500の200語を2つの自然な例文で学べるように品質改善した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.12は現在搭載中の800語すべてを2例文対応にし、全体品質検収を完了した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -809,6 +809,12 @@ main{
 <script src="./vocab-essential.js?v=191"></script>
 <script src="./vocab-examples-301-400.js?v=1110"></script>
 <script src="./vocab-examples-401-500.js?v=1111"></script>
+<script src="./vocab-examples-001-100.js?v=1200"></script>
+<script src="./vocab-examples-101-200.js?v=1200"></script>
+<script src="./vocab-examples-201-300.js?v=1200"></script>
+<script src="./vocab-examples-501-600.js?v=1200"></script>
+<script src="./vocab-examples-601-700.js?v=1200"></script>
+<script src="./vocab-examples-701-800.js?v=1200"></script>
 <script src="./questions-exam.js?v=190"></script>
 <script>
 const data={
@@ -1583,7 +1589,7 @@ function renderVocabGoal(){
   document.getElementById("vocabStage800").classList.toggle("active",current==="essential");
   document.getElementById("vocabStage1500").classList.toggle("active",current==="level2");
   document.getElementById("vocabBankNote").textContent=
-    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 2例文化はV301〜V500まで完了。順次拡張中です。";
+    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 現在の800語はすべて2つの例文で学習できます。";
 }
 function getVocabNewPerDay(){
   return Number(store.get().vocabSettings?.newPerDay||10);
@@ -2191,7 +2197,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1111",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1200",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
