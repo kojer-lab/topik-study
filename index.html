@@ -137,16 +137,21 @@ h1{font-size:30px;margin:0}
   border:1px solid var(--line)
 }
 .listenbox.show{display:block}
-.listen-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.listen-controls{
+  display:grid;grid-template-columns:minmax(0,1fr) auto 48px;gap:8px;align-items:center
+}
 .listen-btn{
   border:0;background:var(--accent);color:white;padding:10px 14px;border-radius:10px;
-  font-weight:800;cursor:pointer
+  font-weight:800;cursor:pointer;min-height:44px
 }
-.listen-pause-btn{background:var(--panel);color:var(--text);border:1px solid var(--line)}
-.listen-btn:disabled{opacity:.45;cursor:default}
+.restart-btn{
+  width:48px;height:44px;border:1px solid var(--line);background:var(--panel);color:var(--text);
+  border-radius:10px;font-size:24px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center
+}
+.restart-btn:active{background:var(--accent2);transform:scale(.97)}
 .speed{
   border:1px solid var(--line);background:var(--panel);color:var(--text);
-  border-radius:10px;padding:9px 10px
+  border-radius:10px;padding:9px 10px;min-height:44px
 }
 .listen-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
 .nextrow{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
@@ -607,12 +612,12 @@ main{
       <div id="listenBox" class="listenbox">
         <div class="listen-controls">
           <button class="listen-btn" id="playBtn">▶ 聞く</button>
-          <button class="listen-btn listen-pause-btn" id="pauseBtn" disabled>⏸ 一時停止</button>
           <select class="speed" id="speedSelect" aria-label="再生速度">
             <option value="0.75">0.75×</option>
             <option value="0.9">0.9×</option>
             <option value="1" selected>1.0×</option>
           </select>
+          <button class="restart-btn" id="restartBtn" type="button" aria-label="最初から再生" title="最初から再生">↻</button>
         </div>
         <div class="listen-note">先に音声だけを聞いて答えてみましょう。台本は回答後に表示されます。</div>
       </div>
@@ -1376,17 +1381,14 @@ function answer(idx){
 // Tapping audio stays synchronous on iPhone Safari; unsupported clips use native speech.
 let activeNeuralAudio=null;
 function setListeningPauseState(state="idle"){
-  const btn=document.getElementById("pauseBtn");
+  const btn=document.getElementById("playBtn");
   if(!btn)return;
   if(state==="playing"){
-    btn.disabled=false;
     btn.textContent="⏸ 一時停止";
   }else if(state==="paused"){
-    btn.disabled=false;
     btn.textContent="▶ 再開";
   }else{
-    btn.disabled=true;
-    btn.textContent="⏸ 一時停止";
+    btn.textContent="▶ 聞く";
   }
 }
 function koreanAudioHash(text){
@@ -1473,14 +1475,21 @@ function playCurrent(){
   }
 }
 
-function toggleListeningPause(){
-  if(!activeNeuralAudio)return;
-  if(activeNeuralAudio.paused){
-    activeNeuralAudio.play().then(()=>setListeningPauseState("playing")).catch(()=>setListeningPauseState("idle"));
-  }else{
-    activeNeuralAudio.pause();
-    setListeningPauseState("paused");
+function toggleListeningPlayback(){
+  if(activeNeuralAudio){
+    if(activeNeuralAudio.paused){
+      activeNeuralAudio.play().then(()=>setListeningPauseState("playing")).catch(()=>setListeningPauseState("idle"));
+    }else{
+      activeNeuralAudio.pause();
+      setListeningPauseState("paused");
+    }
+    return;
   }
+  playCurrent();
+}
+
+function restartListening(){
+  playCurrent();
 }
 
 const hintBtn=document.getElementById("hintBtn");
@@ -1493,8 +1502,8 @@ function setQuizMode(mode){
 }
 hintBtn.onclick=()=>hintBox.classList.toggle("show");
 
-document.getElementById("playBtn").onclick=playCurrent;
-document.getElementById("pauseBtn").onclick=toggleListeningPause;
+document.getElementById("playBtn").onclick=toggleListeningPlayback;
+document.getElementById("restartBtn").onclick=restartListening;
 document.getElementById("nextBtn").onclick=()=>{
   stopKoreanAudio();
   const total=sessionItems?sessionItems.length:data[currentType].length;
