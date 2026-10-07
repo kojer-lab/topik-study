@@ -138,7 +138,7 @@ h1{font-size:30px;margin:0}
 }
 .listenbox.show{display:block}
 .listen-controls{
-  display:grid;grid-template-columns:minmax(0,1fr) 48px 92px;gap:8px;align-items:center
+  display:grid;grid-template-columns:minmax(0,1fr) 48px 108px;gap:8px;align-items:center
 }
 .listen-btn{
   border:0;background:var(--accent);color:white;padding:10px 14px;border-radius:10px;
@@ -150,9 +150,9 @@ h1{font-size:30px;margin:0}
 }
 .restart-btn:active{background:var(--accent2);transform:scale(.97)}
 .speed{
-  width:92px;box-sizing:border-box;
+  width:108px;min-width:108px;box-sizing:border-box;font-size:16px;
   border:1px solid var(--line);background:var(--panel);color:var(--text);
-  border-radius:10px;padding:9px 10px;min-height:44px
+  border-radius:10px;padding:9px 30px 9px 12px;min-height:44px
 }
 .listen-note{font-size:12px;color:var(--muted);margin-top:8px;line-height:1.5}
 .nextrow{display:flex;justify-content:space-between;gap:10px;margin-top:16px}
@@ -2270,7 +2270,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1580",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1590",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
