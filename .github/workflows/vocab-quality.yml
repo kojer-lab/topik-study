@@ -27,4 +27,4 @@ jobs:
         with:
           node-version: '20'
       - name: Audit 1,500 vocabulary entries
-        run: node scripts/audit-vocab-quality.cjs
+        run: node scripts/audit-vocab-quality.cjs --strict
