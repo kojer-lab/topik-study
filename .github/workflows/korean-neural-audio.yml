@@ -27,6 +27,7 @@ on:
     paths:
       - '.github/workflows/korean-neural-audio.yml'
       - 'scripts/export-korean-audio.cjs'
+      - 'scripts/generate-korean-audio.py'
 
 permissions:
   contents: write
@@ -78,7 +79,24 @@ jobs:
             echo "No new audio files"
           else
             git commit -m "Add Korean MeloTTS neural audio"
-            git push
+            for attempt in 1 2 3 4 5; do
+              echo "Audio push attempt $attempt/5"
+              git fetch origin main
+              if ! git rebase origin/main; then
+                echo "::error::Audio files overlap newer changes on main."
+                git rebase --abort
+                exit 1
+              fi
+              if git push origin HEAD:main; then
+                echo "AI audio published successfully."
+                break
+              fi
+              if [ "$attempt" = "5" ]; then
+                echo "::error::Main changed during every audio push retry."
+                exit 1
+              fi
+              sleep 5
+            done
           fi
 
       - name: Request GitHub Pages rebuild for generated clips
