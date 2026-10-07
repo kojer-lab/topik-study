@@ -75,16 +75,40 @@ def main():
         from melo.api import TTS
         model=TTS(language="KR",device="cpu")
         speaker=model.hps.data.spk2id["KR"]
+        skipped=[]
         for index,r in enumerate(to_generate,1):
             output=target/(r["key"]+".mp3")
-            if r.get("kind")=="dialogue" and r.get("segments"):
-                synth_dialogue(model,speaker,r["segments"],output)
-            else:
-                synth_single(model,speaker,r["text"],output,1.0)
-            if output.stat().st_size<100:
-                raise RuntimeError(f"Empty audio: {output}")
+            try:
+                if r.get("kind")=="dialogue" and r.get("segments"):
+                    synth_dialogue(model,speaker,r["segments"],output)
+                else:
+                    synth_single(model,speaker,r["text"],output,1.0)
+                if output.stat().st_size<100:
+                    raise RuntimeError(f"Empty audio: {output}")
+            except Exception as exc:
+                if output.exists():
+                    output.unlink()
+                skipped.append({
+                    "key":r["key"],
+                    "text":r.get("text",""),
+                    "kind":r.get("kind","unknown"),
+                    "error":type(exc).__name__+": "+str(exc)
+                })
+                print(f"SKIP {r['key']} {r.get('kind')} {r.get('text','')!r}: {exc}",flush=True)
             if index%10==0:
-                print(f"Generated {index}/{len(to_generate)}",flush=True)
+                print(f"Processed {index}/{len(to_generate)}; skipped {len(skipped)}",flush=True)
+        if skipped:
+            skip_path=Path("tts/skipped-audio.json")
+            previous=[]
+            if skip_path.exists():
+                try:
+                    previous=json.loads(skip_path.read_text(encoding="utf-8"))
+                except Exception:
+                    previous=[]
+            merged={item["key"]:item for item in previous if isinstance(item,dict) and item.get("key")}
+            for item in skipped:
+                merged[item["key"]]=item
+            skip_path.write_text(json.dumps(list(merged.values()),ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
 
     dialogue_records=[r for r in records if r.get("kind")=="dialogue"]
     dialogue_ready=all((target/(r["key"]+".mp3")).exists() for r in dialogue_records)
@@ -96,8 +120,16 @@ def main():
     manifest.parent.mkdir(parents=True,exist_ok=True)
     manifest.write_text("window.TOPIK_NEURAL_HASHES = "+json.dumps(keys,ensure_ascii=False)+";\n",encoding="utf-8")
 
-    remaining=sum(1 for r in records if not (target/(r["key"]+".mp3")).exists())
-    print(f"Audio available: {len(keys)}; listening ready: {sum((target/(r['key']+'.mp3')).exists() for r in dialogue_records)}/{len(dialogue_records)}; remaining in requested corpus: {remaining}",flush=True)
+    skipped_keys=set()
+    skip_path=Path("tts/skipped-audio.json")
+    if skip_path.exists():
+        try:
+            skipped_keys={item.get("key") for item in json.loads(skip_path.read_text(encoding="utf-8")) if isinstance(item,dict)}
+        except Exception:
+            skipped_keys=set()
+    remaining=sum(1 for r in records if r["key"] not in skipped_keys and not (target/(r["key"]+".mp3")).exists())
+    listening_ready=sum((target/(r["key"]+".mp3")).exists() for r in dialogue_records)
+    print(f"Audio available: {len(keys)}; listening ready: {listening_ready}/{len(dialogue_records)}; skipped: {len(skipped_keys)}; remaining in requested corpus: {remaining}",flush=True)
     github_env=os.environ.get("GITHUB_ENV")
     if github_env:
         with open(github_env,"a",encoding="utf-8") as env:
