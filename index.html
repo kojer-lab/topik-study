@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.12.1</title>
+<title>TOPIK I · 2級 Study v1.13</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -558,7 +558,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.12は現在搭載中の800語すべてを2例文対応にし、全体品質検収を完了した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.13は1,500語に2つずつの例文を収録。練習問題は学習用のオリジナル問題です。
   </div>
 </section>
 
@@ -659,7 +659,7 @@ main{
 
 <section id="wordbookView" class="hidden">
   <div class="topbar">
-    <div><h1>単語</h1><div class="sub">TOPIK I 2級の実戦目標は1,500語。現在はCORE 300＋必修500を合わせた800語をSRSで学べます。</div></div>
+    <div><h1>単語</h1><div class="sub">TOPIK I 2級を目指す1,500語をすべて収録。1語ずつ、韓国語の例文2つと日本語訳で学べます。</div></div>
   </div>
 
   <div id="vocabDashboard" class="srs-dashboard">
@@ -765,6 +765,7 @@ main{
     </div>
     <div id="vocabCount" class="vocab-count"></div>
     <div id="wordbookList" class="wordbook-grid"></div>
+    <button id="vocabShowMore" class="secondary hidden" style="width:100%;margin:14px 0 8px;min-height:48px">さらに60語表示</button>
   </div>
 </section>
 
@@ -815,6 +816,13 @@ main{
 <script src="./vocab-examples-501-600.js?v=1201"></script>
 <script src="./vocab-examples-601-700.js?v=1201"></script>
 <script src="./vocab-examples-701-800.js?v=1201"></script>
+<script src="./vocab-upper-batch-a.js?v=1300"></script>
+<script src="./vocab-upper-batch-b.js?v=1300"></script>
+<script src="./vocab-upper-batch-c.js?v=1300"></script>
+<script src="./vocab-upper-batch-d.js?v=1300"></script>
+<script src="./vocab-upper-batch-e.js?v=1300"></script>
+<script src="./vocab-upper-batch-f.js?v=1300"></script>
+<script src="./vocab-upper-batch-g.js?v=1300"></script>
 <script src="./questions-exam.js?v=190"></script>
 <script>
 const data={
@@ -1025,7 +1033,7 @@ function showView(name){
     startQuiz(name);
   }
   if(name==="review"){views.review.classList.remove("hidden");renderMistakes()}
-  if(name==="wordbook"){views.wordbook.classList.remove("hidden");shuffleVocabBrowseOrder();renderWordbook()}
+  if(name==="wordbook"){views.wordbook.classList.remove("hidden");vocabBrowseLimit=60;shuffleVocabBrowseOrder();renderWordbook()}
   if(name==="stats"){views.stats.classList.remove("hidden");renderStats()}
   document.querySelectorAll(".nav button,.bottom-nav button").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
   window.scrollTo({top:0,behavior:"smooth"});
@@ -1589,7 +1597,7 @@ function renderVocabGoal(){
   document.getElementById("vocabStage800").classList.toggle("active",current==="essential");
   document.getElementById("vocabStage1500").classList.toggle("active",current==="level2");
   document.getElementById("vocabBankNote").textContent=
-    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 現在の800語はすべて2つの例文で学習できます。";
+    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 全カードに韓国語例文2つと日本語訳があります。";
 }
 function getVocabNewPerDay(){
   return Number(store.get().vocabSettings?.newPerDay||10);
@@ -1791,7 +1799,7 @@ function showNextVocabCard(){
   document.getElementById("srsReviewProgress").textContent=`${vocabReviewDone+1} / ${vocabReviewTotal}`;
   document.getElementById("srsWord").textContent=w.word;
   document.getElementById("srsMeaning").textContent=w.meaning;
-  document.getElementById("srsPron").textContent=`発音メモ [${w.pron}]`;
+  document.getElementById("srsPron").textContent=(w.pron&&w.pron!==w.word)?`発音メモ [${w.pron}]`:"🔊で発音を聞けます";
   document.getElementById("srsSentence").textContent=w.sentence;
   document.getElementById("srsSentenceJp").textContent=w.sentenceJp;
   const hasSecondExample=!!(w.sentence2&&w.sentenceJp2);
@@ -1955,6 +1963,7 @@ function resumeVocabCard(id){
 
 let vocabFilter="all";
 let vocabBrowseOrder=[];
+let vocabBrowseLimit=60;
 function shuffleVocabBrowseOrder(){
   const ids=vocabCatalog().map(w=>w.id);
   for(let i=ids.length-1;i>0;i--){
@@ -1992,7 +2001,13 @@ function renderWordbook(){
   document.getElementById("vocabAllBtn").textContent=`すべて ${catalog.length}`;
   document.getElementById("vocabSavedBtn").classList.toggle("active",vocabFilter==="saved");
   document.getElementById("vocabSavedBtn").textContent=`⭐ 保存済み ${savedSet.size}`;
-  document.getElementById("vocabCount").textContent=`${rows.length}語を表示中 · 単語タブを開くたびに一覧の順番がランダムに変わります。`;
+  const totalMatched=rows.length;
+  const visibleCount=Math.min(totalMatched,vocabBrowseLimit);
+  document.getElementById("vocabCount").textContent=`一致 ${totalMatched}語 · ${visibleCount}語を表示中 · タブを開くたびに順番が変わります。`;
+  const moreBtn=document.getElementById("vocabShowMore");
+  moreBtn.classList.toggle("hidden",visibleCount>=totalMatched);
+  moreBtn.textContent=`さらに表示 · 残り ${Math.max(0,totalMatched-visibleCount)}語`;
+  rows=rows.slice(0,visibleCount);
   box.innerHTML="";
   if(!rows.length){
     box.innerHTML='<div class="card empty">条件に合う単語がありません。</div>';
@@ -2003,6 +2018,7 @@ function renderWordbook(){
     const state=s.vocabSrs?.[w.id];
     const badges=[];
     const secondExampleHTML=w.sentence2?'<div class="vocab-example"><div class="example-tag">例文 2</div><div class="ko">'+esc(w.sentence2)+'</div><div class="jp">'+esc(w.sentenceJp2||"")+'</div></div>':"";
+    const pronHTML=(w.pron&&w.pron!==w.word)?'<div class="vocab-pron">発音メモ ['+esc(w.pron)+']</div>':'';
     const secondAudioHTML=w.sentence2?'<button class="secondary" data-vspeak-sentence2="'+esc(w.id)+'">🔊 例文2</button>':"";
     if(state?.suspended)badges.push('<span class="srs-badge suspended">⏸ 保留</span>');
     if(state?.manualMastered||state?.status==="mastered")badges.push('<span class="srs-badge mastered">✓ 定着</span>');
@@ -2014,7 +2030,7 @@ function renderWordbook(){
         <div>
           <div class="vocab-word">${esc(w.word)}</div>
           <div class="vocab-meaning">${esc(w.meaning)}</div>
-          <div class="vocab-pron">発音メモ [${esc(w.pron)}]</div>
+          ${pronHTML}
           <div class="vocab-tier-badge">${esc(vocabTier(w).label)}</div>
           <div class="srs-list-meta">${badges.join("")}</div>
         </div>
@@ -2112,9 +2128,10 @@ document.getElementById("srsSuspend").onclick=suspendVocabCurrent;
 document.getElementById("srsMaster").onclick=masterVocabCurrent;
 document.querySelectorAll("[data-srs-rate]").forEach(btn=>btn.onclick=()=>rateVocabCard(btn.dataset.srsRate));
 
-document.getElementById("vocabSearch").addEventListener("input",renderWordbook);
-document.getElementById("vocabAllBtn").onclick=()=>{vocabFilter="all";renderWordbook()};
-document.getElementById("vocabSavedBtn").onclick=()=>{vocabFilter="saved";renderWordbook()};
+document.getElementById("vocabSearch").addEventListener("input",()=>{vocabBrowseLimit=60;renderWordbook()});
+document.getElementById("vocabShowMore").onclick=()=>{vocabBrowseLimit+=60;renderWordbook()};
+document.getElementById("vocabAllBtn").onclick=()=>{vocabFilter="all";vocabBrowseLimit=60;renderWordbook()};
+document.getElementById("vocabSavedBtn").onclick=()=>{vocabFilter="saved";vocabBrowseLimit=60;renderWordbook()};
 document.getElementById("clearMistakes").onclick=()=>{
   if(confirm("間違いノートをすべて削除しますか？")){
     const s=store.get();s.mistakes=[];store.set(s);renderMistakes();renderHome();
@@ -2197,7 +2214,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1201",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1300",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
