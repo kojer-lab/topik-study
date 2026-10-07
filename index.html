@@ -563,7 +563,7 @@ main{
       <div class="level-badge">TOPIK I · 2級</div>
       <div class="sub">TOPIK II（3〜6級）ではなく、TOPIK Iの2級を想定した初級学習版です。</div>
       <ul class="feature-list">
-        <li>問題・指示・選択肢は韓国語中心</li><li>日本語ヒントは学習モードのみ表示</li>
+        <li>問題・指示・選択肢は韓国語中心</li><li>日本語ヒントは通常練習で表示（模擬試験では非表示）</li>
         <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li><li><strong>全800問</strong>のオリジナル問題銀行</li>
         <li>韓国語TTSによる聴解練習</li>
         <li>回答後に台本・日本語訳を表示</li>
@@ -591,8 +591,6 @@ main{
 <section id="quizView" class="hidden">
   <div class="quiz-wrap">
     <div class="modebar">
-      <button class="modebtn active" id="studyModeBtn">学習モード</button>
-      <button class="modebtn" id="testModeBtn">実戦モード</button>
       <button class="hintbtn" id="hintBtn">日本語ヒント</button>
     </div>
     <div class="hintbox" id="hintBox"></div>
@@ -671,7 +669,7 @@ main{
     </div>
   </div>
 
-  <div class="ios-tip">実戦モードでは日本語ヒントを隠して、韓国語だけで解くことができます。</div>
+  <div class="ios-tip">本番型模擬試験では日本語ヒントを隠して、韓国語だけで解きます。</div>
 </section>
 
 <section id="reviewView" class="hidden">
@@ -975,7 +973,6 @@ function showView(name){
   if(sessionKind==="mock" && !views.quiz.classList.contains("hidden")){
     if(!confirm("模擬試験を終了して移動しますか？"))return;
     stopMockTimer();
-    studyModeBtn.disabled=false;testModeBtn.disabled=false;
     sessionItems=null;sessionKind="single";mockAnswers=[];
   }
   stopKoreanAudio();
@@ -1141,8 +1138,6 @@ function startMockTimer(minutes=100){
 }
 function startMockExam(){
   setQuizMode("test");
-  studyModeBtn.disabled=true;
-  testModeBtn.disabled=true;
   const listening=shuffledIndexes(data.listening.length).slice(0,30).map(index=>({type:"listening",index}));
   const reading=shuffledIndexes(data.reading.length).slice(0,40).map(index=>({type:"reading",index}));
   sessionItems=[...listening,...reading];
@@ -1346,7 +1341,7 @@ function answer(idx){
     btn.onclick=(ev)=>{
       ev.stopPropagation();
       const g=(item.v||[])[Number(btn.dataset.glossSpeak)];
-      if(g?.[0])speakKorean(g[0],0.82);
+      if(g?.[0])speakKorean(g[0],1);
     };
   });
   exp.querySelectorAll("[data-star]").forEach(btn=>{
@@ -1407,7 +1402,7 @@ function nativeKoreanSpeech(text,rate){
   if(ko)speech.voice=ko;
   window.speechSynthesis.speak(speech);
 }
-function speakKorean(text,rate=0.9,options={}){
+function speakKorean(text,rate=1,options={}){
   text=String(text||"").trim();
   if(!text)return false;
   stopKoreanAudio();
@@ -1454,20 +1449,14 @@ function playCurrent(){
 }
 
 
-const studyModeBtn=document.getElementById("studyModeBtn");
-const testModeBtn=document.getElementById("testModeBtn");
 const hintBtn=document.getElementById("hintBtn");
 const hintBox=document.getElementById("hintBox");
 
 function setQuizMode(mode){
   quizMode=mode;
-  studyModeBtn.classList.toggle("active",mode==="study");
-  testModeBtn.classList.toggle("active",mode==="test");
   hintBtn.classList.toggle("hidden",mode==="test");
   hintBox.classList.remove("show");
 }
-studyModeBtn.onclick=()=>{if(sessionKind!=="mock")setQuizMode("study")};
-testModeBtn.onclick=()=>{if(sessionKind!=="mock")setQuizMode("test")};
 hintBtn.onclick=()=>hintBox.classList.toggle("show");
 
 document.getElementById("playBtn").onclick=playCurrent;
@@ -1490,7 +1479,6 @@ document.getElementById("nextBtn").onclick=()=>{
 function finishMockExam(timeUp=false){
   stopMockTimer();
   stopKoreanAudio();
-  studyModeBtn.disabled=false;testModeBtn.disabled=false;
   const total=70;
   const answeredCount=mockAnswers.length;
   const correct=mockAnswers.filter(x=>x.ok).length;
@@ -2080,13 +2068,13 @@ function renderWordbook(){
     toggleFavoriteEntry(w);renderWordbook();
   });
   box.querySelectorAll("[data-vspeak-word]").forEach(btn=>btn.onclick=()=>{
-    const w=catalog.find(x=>x.id===btn.dataset.vspeakWord);if(w)speakKorean(w.word,0.82);
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakWord);if(w)speakKorean(w.word,1);
   });
   box.querySelectorAll("[data-vspeak-sentence]").forEach(btn=>btn.onclick=()=>{
-    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence);if(w)speakKorean(w.sentence,0.86);
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence);if(w)speakKorean(w.sentence,1);
   });
   box.querySelectorAll("[data-vspeak-sentence2]").forEach(btn=>btn.onclick=()=>{
-    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence2);if(w?.sentence2)speakKorean(w.sentence2,0.86);
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence2);if(w?.sentence2)speakKorean(w.sentence2,1);
   });
   box.querySelectorAll("[data-vresume]").forEach(btn=>btn.onclick=()=>resumeVocabCard(btn.dataset.vresume));
 }
@@ -2144,9 +2132,9 @@ document.getElementById("startVocabReview").onclick=startVocabSrs;
 document.getElementById("exitVocabReview").onclick=exitVocabSrs;
 document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
 document.getElementById("srsReveal").onclick=revealVocabAnswer;
-document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
-document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,0.86)};
-document.getElementById("srsSpeakSentence2").onclick=()=>{if(vocabReviewCurrent?.sentence2)speakKorean(vocabReviewCurrent.sentence2,0.86)};
+document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,1)};
+document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,1)};
+document.getElementById("srsSpeakSentence2").onclick=()=>{if(vocabReviewCurrent?.sentence2)speakKorean(vocabReviewCurrent.sentence2,1)};
 document.getElementById("srsSuspend").onclick=suspendVocabCurrent;
 document.getElementById("srsMaster").onclick=masterVocabCurrent;
 document.querySelectorAll("[data-srs-rate]").forEach(btn=>btn.onclick=()=>rateVocabCard(btn.dataset.srsRate));
