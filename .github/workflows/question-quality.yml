@@ -1,0 +1,30 @@
+name: Question Quality Audit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/audit-question-quality.cjs'
+      - '.github/workflows/question-quality.yml'
+      - 'index.html'
+      - 'questions-extra.js'
+      - 'questions-exam.js'
+      - 'questions-training-*.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: question-quality-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Audit complete question bank
+        run: node scripts/audit-question-quality.cjs
