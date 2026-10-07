@@ -1,0 +1,30 @@
+name: Vocabulary Quality Audit
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'scripts/audit-vocab-quality.cjs'
+      - '.github/workflows/vocab-quality.yml'
+      - 'vocab-catalog.js'
+      - 'vocab-essential.js'
+      - 'vocab-examples-*.js'
+      - 'vocab-upper-batch-*.js'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: vocab-quality-audit
+  cancel-in-progress: true
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Audit 1,500 vocabulary entries
+        run: node scripts/audit-vocab-quality.cjs
