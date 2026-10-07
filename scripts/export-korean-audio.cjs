@@ -42,6 +42,29 @@ for (const v of catalog) {
     utterances.set(key,text);
   }
 }
+// Optional listening clips use the same normalized text as playCurrent().
+const listeningStart = Math.max(0, parseInt(process.argv[4] || '0', 10));
+const listeningEnd = Math.max(listeningStart, parseInt(process.argv[5] || '10', 10));
+const html = fs.readFileSync('index.html','utf8');
+const match = html.match(/const data=({[\s\S]*?});\n\nif\(window\.EXTRA_QUESTIONS\)/);
+if (!match) throw new Error('Cannot find base listening bank');
+const initialBank = vm.runInNewContext('(' + match[1] + ')');
+const allListening = initialBank.listening.slice();
+for (const file of ['questions-extra.js','questions-exam.js','questions-training-01.js','questions-training-02.js','questions-training-03.js']){
+  vm.runInContext(fs.readFileSync(file,'utf8'),ctx,{filename:file});
+}
+for (const group of [ctx.window.EXTRA_QUESTIONS,ctx.window.EXAM_QUESTIONS,
+  ctx.window.TRAINING_QUESTIONS_1,ctx.window.TRAINING_QUESTIONS_2,ctx.window.TRAINING_QUESTIONS_3]){
+  if(Array.isArray(group?.listening))allListening.push(...group.listening);
+}
+const selectedListening=allListening.slice(listeningStart,listeningEnd);
+for(const item of selectedListening){
+  if(!item.audio)continue;
+  const text=String(item.audio).replace(/^(여자|남자):\s*/gm,"").trim();
+  const key=hash(text);
+  if(utterances.has(key)&&utterances.get(key)!==text)throw new Error('Audio hash collision '+key);
+  utterances.set(key,text);
+}
 const output = Array.from(utterances,([key,text])=>({key,text}));
 fs.writeFileSync('/tmp/topik-korean-corpus.json',JSON.stringify(output,null,2),'utf8');
-console.log(JSON.stringify({start,end,vocabulary:end-start+1,uniqueAudio:output.length}));
+console.log(JSON.stringify({start,end,vocabulary:end-start+1,listening:selectedListening.length,uniqueAudio:output.length}));
