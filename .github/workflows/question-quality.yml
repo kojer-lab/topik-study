@@ -27,4 +27,4 @@ jobs:
         with:
           node-version: '20'
       - name: Audit complete question bank
-        run: node scripts/audit-question-quality.cjs
+        run: node scripts/audit-question-quality.cjs --strict
