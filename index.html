@@ -992,6 +992,7 @@ function showView(name){
   if(sessionKind==="mock" && !views.quiz.classList.contains("hidden")){
     if(!confirm("模擬試験を終了して移動しますか？"))return;
     stopMockTimer();
+    studyModeBtn.disabled=false;testModeBtn.disabled=false;
     sessionItems=null;sessionKind="single";mockAnswers=[];
   }
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
@@ -1157,6 +1158,8 @@ function startMockTimer(minutes=100){
 }
 function startMockExam(){
   setQuizMode("test");
+  studyModeBtn.disabled=true;
+  testModeBtn.disabled=true;
   const listening=shuffledIndexes(data.listening.length).slice(0,30).map(index=>({type:"listening",index}));
   const reading=shuffledIndexes(data.reading.length).slice(0,40).map(index=>({type:"reading",index}));
   sessionItems=[...listening,...reading];
@@ -1414,8 +1417,8 @@ function setQuizMode(mode){
   hintBtn.classList.toggle("hidden",mode==="test");
   hintBox.classList.remove("show");
 }
-studyModeBtn.onclick=()=>setQuizMode("study");
-testModeBtn.onclick=()=>setQuizMode("test");
+studyModeBtn.onclick=()=>{if(sessionKind!=="mock")setQuizMode("study")};
+testModeBtn.onclick=()=>{if(sessionKind!=="mock")setQuizMode("test")};
 hintBtn.onclick=()=>hintBox.classList.toggle("show");
 
 document.getElementById("playBtn").onclick=playCurrent;
@@ -1437,6 +1440,8 @@ document.getElementById("nextBtn").onclick=()=>{
 };
 function finishMockExam(timeUp=false){
   stopMockTimer();
+  if("speechSynthesis" in window)window.speechSynthesis.cancel();
+  studyModeBtn.disabled=false;testModeBtn.disabled=false;
   const total=70;
   const answeredCount=mockAnswers.length;
   const correct=mockAnswers.filter(x=>x.ok).length;
@@ -1564,7 +1569,7 @@ function renderVocabGoal(){
   document.getElementById("vocabStage800").classList.toggle("active",current==="essential");
   document.getElementById("vocabStage1500").classList.toggle("active",current==="level2");
   document.getElementById("vocabBankNote").textContent=
-    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 追加データは既存の学習記録を残したまま拡張されます。";
+    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 国立国語院の初級学習語彙範囲などを参考に整理しています。";
 }
 function getVocabNewPerDay(){
   return Number(store.get().vocabSettings?.newPerDay||10);
