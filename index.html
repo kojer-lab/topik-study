@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.8.1</title>
+<title>TOPIK I · 2級 Study v1.9</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -77,6 +77,13 @@ h1{font-size:30px;margin:0}
 }
 .quiz-wrap{max-width:780px;margin:0 auto}
 .quiz-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.mock-timer{
+  display:inline-flex;align-items:center;justify-content:center;min-width:76px;
+  padding:7px 10px;border-radius:999px;background:var(--accent2);color:var(--accent);
+  font-weight:900;font-variant-numeric:tabular-nums
+}
+.mock-timer.warn{color:var(--bad);background:color-mix(in srgb,var(--bad) 10%,var(--panel))}
+
 .qtype{font-size:12px;font-weight:800;color:var(--accent);letter-spacing:.06em}
 .counter{color:var(--muted);font-size:13px}
 .question{font-size:24px;line-height:1.7;font-weight:700;margin:14px 0 22px;word-break:keep-all}
@@ -526,7 +533,7 @@ main{
       <div class="sub">TOPIK II（3〜6級）ではなく、TOPIK Iの2級を想定した初級学習版です。</div>
       <ul class="feature-list">
         <li>問題・指示・選択肢は韓国語中心</li><li>日本語ヒントは学習モードのみ表示</li>
-        <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li><li><strong>全300問</strong>のオリジナル問題銀行</li>
+        <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li><li><strong>全500問</strong>のオリジナル問題銀行</li>
         <li>韓国語TTSによる聴解練習</li>
         <li>回答後に台本・日本語訳を表示</li>
         <li>単語をタップすると意味・発音メモを表示</li>
@@ -546,7 +553,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.8.1は新規単語の学習間隔を1分・6分・10分・4日に調整した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.9は必修800語・全500問・70問100分の本番型模擬試験を追加した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -560,7 +567,10 @@ main{
     <div class="hintbox" id="hintBox"></div>
     <div class="quiz-head">
       <div class="qtype" id="quizType"></div>
-      <div class="counter" id="quizCounter"></div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="mock-timer hidden" id="mockTimer">100:00</div>
+        <div class="counter" id="quizCounter"></div>
+      </div>
     </div>
     <div class="card">
       <div id="listenBox" class="listenbox">
@@ -626,7 +636,7 @@ main{
     </div>
     <div class="hub-card" id="mockStartHub">
       <div class="hub-icon">🧪</div>
-      <div><strong>模擬試験 · 20問</strong><p>途中で正解を表示せず、最後にまとめて採点します。</p></div>
+      <div><strong>本番型模擬試験 · 70問</strong><p>聴解30＋読解40。100分タイマーで最後にまとめて採点します。</p></div>
     </div>
   </div>
 
@@ -644,7 +654,7 @@ main{
 
 <section id="wordbookView" class="hidden">
   <div class="topbar">
-    <div><h1>単語</h1><div class="sub">TOPIK I 2級の実戦目標は1,500語。現在の単語銀行を段階的に増やしながら、SRSで定着させます。</div></div>
+    <div><h1>単語</h1><div class="sub">TOPIK I 2級の実戦目標は1,500語。現在はCORE 300＋必修500を合わせた800語をSRSで学べます。</div></div>
   </div>
 
   <div id="vocabDashboard" class="srs-dashboard">
@@ -784,6 +794,8 @@ main{
 
 <script src="./questions-extra.js?v=110"></script>
 <script src="./vocab-catalog.js?v=140"></script>
+<script src="./vocab-essential.js?v=190"></script>
+<script src="./questions-exam.js?v=190"></script>
 <script>
 const data={
 vocab:[
@@ -880,6 +892,14 @@ if(window.EXTRA_QUESTIONS){
   }
 }
 
+if(window.EXAM_QUESTIONS){
+  for(const type of ["vocab","grammar","reading","listening"]){
+    if(Array.isArray(window.EXAM_QUESTIONS[type])){
+      data[type].push(...window.EXAM_QUESTIONS[type]);
+    }
+  }
+}
+
 // Stable problem IDs. Existing question order must not be changed; new questions are appended.
 const PROBLEM_PREFIX={vocab:"V",grammar:"G",reading:"R",listening:"L"};
 for(const [type,items] of Object.entries(data)){
@@ -957,7 +977,7 @@ const store={
 };
 store.set(store.get());
 
-let currentType="vocab",currentIndex=0,answered=false,order=[],speech=null,quizMode="study",currentDisplayChoices=[],currentCorrectDisplayIndex=0,sessionItems=null,sessionKind="single",mockAnswers=[];
+let currentType="vocab",currentIndex=0,answered=false,order=[],speech=null,quizMode="study",currentDisplayChoices=[],currentCorrectDisplayIndex=0,sessionItems=null,sessionKind="single",mockAnswers=[],mockTimerId=null,mockEndAt=0;
 const views={
   home:document.getElementById("homeView"),
   learning:document.getElementById("learningView"),
@@ -969,6 +989,11 @@ const views={
 };
 
 function showView(name){
+  if(sessionKind==="mock" && !views.quiz.classList.contains("hidden")){
+    if(!confirm("模擬試験を終了して移動しますか？"))return;
+    stopMockTimer();
+    sessionItems=null;sessionKind="single";mockAnswers=[];
+  }
   if("speechSynthesis" in window) window.speechSynthesis.cancel();
   Object.values(views).forEach(v=>v.classList.add("hidden"));
   if(name==="home") views.home.classList.remove("hidden");
@@ -1104,15 +1129,42 @@ function startMistakeReview(){
   renderQuestion();
 }
 
+function stopMockTimer(){
+  if(mockTimerId){clearInterval(mockTimerId);mockTimerId=null}
+  mockEndAt=0;
+  const el=document.getElementById("mockTimer");
+  if(el){el.classList.add("hidden");el.classList.remove("warn")}
+}
+function updateMockTimer(){
+  const el=document.getElementById("mockTimer");
+  if(!el||!mockEndAt)return;
+  const remain=Math.max(0,Math.ceil((mockEndAt-Date.now())/1000));
+  const min=Math.floor(remain/60),sec=remain%60;
+  el.textContent=String(min).padStart(2,"0")+":"+String(sec).padStart(2,"0");
+  el.classList.toggle("warn",remain<=600);
+  if(remain<=0){
+    stopMockTimer();
+    if(sessionKind==="mock")finishMockExam(true);
+  }
+}
+function startMockTimer(minutes=100){
+  stopMockTimer();
+  const el=document.getElementById("mockTimer");
+  el.classList.remove("hidden");
+  mockEndAt=Date.now()+minutes*60*1000;
+  updateMockTimer();
+  mockTimerId=setInterval(updateMockTimer,1000);
+}
 function startMockExam(){
   setQuizMode("test");
-  const listening=shuffledIndexes(data.listening.length).slice(0,10).map(index=>({type:"listening",index}));
-  const reading=shuffledIndexes(data.reading.length).slice(0,10).map(index=>({type:"reading",index}));
+  const listening=shuffledIndexes(data.listening.length).slice(0,30).map(index=>({type:"listening",index}));
+  const reading=shuffledIndexes(data.reading.length).slice(0,40).map(index=>({type:"reading",index}));
   sessionItems=[...listening,...reading];
   sessionKind="mock";
   currentIndex=0;
   mockAnswers=[];
   showViewDirectQuiz();
+  startMockTimer(100);
   renderQuestion();
 }
 
@@ -1139,6 +1191,7 @@ function renderQuestion(){
   const kindLabel={daily:"今日の学習",mistakes:"復習",mock:"模擬試験",single:""}[sessionKind]||"";
   document.getElementById("quizType").innerHTML=TYPE_NAMES[currentType]+(kindLabel?`<span class="session-chip">${kindLabel}</span>`:"");
   document.getElementById("quizCounter").textContent=`${currentIndex+1} / ${ref.total}`;
+  document.getElementById("mockTimer").classList.toggle("hidden",sessionKind!=="mock");
 
   const passage=document.getElementById("passage");
   if(item.passage){
@@ -1382,17 +1435,26 @@ document.getElementById("nextBtn").onclick=()=>{
     }
   }
 };
-function finishMockExam(){
-  const total=mockAnswers.length;
+function finishMockExam(timeUp=false){
+  stopMockTimer();
+  const total=70;
+  const answeredCount=mockAnswers.length;
   const correct=mockAnswers.filter(x=>x.ok).length;
-  const pct=total?Math.round(correct/total*100):0;
+  const listeningCorrect=mockAnswers.filter(x=>x.type==="listening"&&x.ok).length;
+  const readingCorrect=mockAnswers.filter(x=>x.type==="reading"&&x.ok).length;
+  const practiceScore=Math.round((listeningCorrect/30)*100+(readingCorrect/40)*100);
+  const pct=Math.round(practiceScore/2);
+  const levelText=practiceScore>=140?"2級目標ライン到達":practiceScore>=80?"1級目標ライン":"基礎をもう一度復習";
   const s=store.get();
-  s.mockHistory.unshift({date:Date.now(),total,correct,pct});
+  s.mockHistory.unshift({
+    date:Date.now(),total:total,answered:answeredCount,correct:correct,pct:pct,
+    score:practiceScore,listeningCorrect:listeningCorrect,readingCorrect:readingCorrect,fullMock:true
+  });
   s.mockHistory=s.mockHistory.slice(0,20);
   store.set(s);
 
   const exp=document.getElementById("explanation");
-  document.getElementById("question").textContent=`模擬試験 結果：${correct} / ${total}（${pct}%）`;
+  document.getElementById("question").textContent="本番型模擬試験 結果";
   document.getElementById("choices").innerHTML="";
   document.getElementById("passage").classList.add("hidden");
   document.getElementById("listenBox").classList.remove("show");
@@ -1405,7 +1467,17 @@ function finishMockExam(){
       <div style="font-weight:700;margin-top:4px">${esc(x.q)}</div>
       <div style="margin-top:6px">あなたの回答：${esc(x.chosen)}<br>正解：<strong>${esc(x.correct)}</strong></div>
     </div>`).join("");
-  exp.innerHTML=`<div style="font-weight:800;font-size:18px">採点結果</div><div class="mock-summary">${rows}</div>`;
+  const unanswered=total-answeredCount;
+  exp.innerHTML=`
+    <div style="font-weight:900;font-size:22px">練習換算 ${practiceScore} / 200</div>
+    <div style="margin-top:7px;font-weight:800;color:var(--accent)">${levelText}</div>
+    <div class="notice" style="margin-top:12px">
+      聴解 ${listeningCorrect}/30 · 読解 ${readingCorrect}/40 · 回答 ${answeredCount}/70
+      ${unanswered?'<br>未回答 '+unanswered+'問':''}
+      ${timeUp?'<br><strong>100分が終了しました。</strong>':''}
+      <br><span style="font-size:12px">※ 200点は学習用の換算値です。2級の140点基準を目安として表示しています。</span>
+    </div>
+    <div class="mock-summary">${rows}</div>`;
   exp.classList.add("show");
   sessionItems=null;
   sessionKind="single";
@@ -2085,7 +2157,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=181",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=190",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
