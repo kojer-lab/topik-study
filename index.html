@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.10.1</title>
+<title>TOPIK I · 2級 Study v1.11</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -558,7 +558,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.10は単語ごとに2つの例文を学べる構造を追加し、V301〜V400を自然な例文に改善した共有版です。実際のTOPIK問題を転載したものではありません。
+    ※ v1.11はV301〜V500の200語を2つの自然な例文で学べるように品質改善した共有版です。実際のTOPIK問題を転載したものではありません。
   </div>
 </section>
 
@@ -807,7 +807,8 @@ main{
 <script src="./questions-extra.js?v=110"></script>
 <script src="./vocab-catalog.js?v=140"></script>
 <script src="./vocab-essential.js?v=191"></script>
-<script src="./vocab-examples-301-400.js?v=1101"></script>
+<script src="./vocab-examples-301-400.js?v=1110"></script>
+<script src="./vocab-examples-401-500.js?v=1110"></script>
 <script src="./questions-exam.js?v=190"></script>
 <script>
 const data={
@@ -1582,7 +1583,7 @@ function renderVocabGoal(){
   document.getElementById("vocabStage800").classList.toggle("active",current==="essential");
   document.getElementById("vocabStage1500").classList.toggle("active",current==="level2");
   document.getElementById("vocabBankNote").textContent=
-    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 2例文化はV301〜V400まで完了。順次拡張中です。";
+    "現在の搭載単語 "+catalog.length.toLocaleString("ja-JP")+"語 / 目標 "+VOCAB_TARGET.toLocaleString("ja-JP")+"語 · 2例文化はV301〜V500まで完了。順次拡張中です。";
 }
 function getVocabNewPerDay(){
   return Number(store.get().vocabSettings?.newPerDay||10);
@@ -2190,7 +2191,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1101",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1110",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
