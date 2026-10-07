@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.11</title>
+<title>TOPIK I · 2級 Study v1.11.1</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -808,7 +808,7 @@ main{
 <script src="./vocab-catalog.js?v=140"></script>
 <script src="./vocab-essential.js?v=191"></script>
 <script src="./vocab-examples-301-400.js?v=1110"></script>
-<script src="./vocab-examples-401-500.js?v=1110"></script>
+<script src="./vocab-examples-401-500.js?v=1111"></script>
 <script src="./questions-exam.js?v=190"></script>
 <script>
 const data={
@@ -2191,7 +2191,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1110",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1111",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
