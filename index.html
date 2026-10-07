@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.15.3</title>
+<title>TOPIK I · 2級 Study v1.15.4</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -1491,33 +1491,50 @@ function nativeKoreanSpeech(text,rate){
   if(ko)speech.voice=ko;
   window.speechSynthesis.speak(speech);
 }
-function speakKorean(text,rate=0.9){
+function speakKorean(text,rate=0.9,options={}){
   text=String(text||"").trim();
-  if(!text)return;
+  if(!text)return false;
   stopKoreanAudio();
   const key=koreanAudioHash(text);
   const available=window.TOPIK_NEURAL_HASHES||[];
   if(available.includes(key)){
-    const audio=new Audio("./tts/ko/"+key+".mp3");
+    const cacheTag=options.cacheTag?("?v="+encodeURIComponent(options.cacheTag)):"";
+    const audio=new Audio("./tts/ko/"+key+".mp3"+cacheTag);
     activeNeuralAudio=audio;
     audio.preload="auto";
     audio.playbackRate=Math.max(0.6,Math.min(1.4,Number(rate)||0.9));
     audio.onended=()=>{if(activeNeuralAudio===audio)activeNeuralAudio=null};
     audio.onerror=()=>{
-      if(activeNeuralAudio===audio){activeNeuralAudio=null;nativeKoreanSpeech(text,rate)}
+      if(activeNeuralAudio===audio){
+        activeNeuralAudio=null;
+        if(options.allowNativeFallback!==false)nativeKoreanSpeech(text,rate);
+      }
     };
     audio.play().catch(()=>{
-      if(activeNeuralAudio===audio){activeNeuralAudio=null;nativeKoreanSpeech(text,rate)}
+      if(activeNeuralAudio===audio){
+        activeNeuralAudio=null;
+        if(options.allowNativeFallback!==false)nativeKoreanSpeech(text,rate);
+      }
     });
-    return;
+    return true;
   }
-  nativeKoreanSpeech(text,rate);
+  if(options.allowNativeFallback!==false)nativeKoreanSpeech(text,rate);
+  return false;
 }
 function playCurrent(){
   if(currentType!=="listening")return;
   const item=getCurrentRef().item;
-  const text=item.audio.replace(/^(여자|남자):\s*/gm,"");
-  speakKorean(text,parseFloat(document.getElementById("speedSelect").value||"0.9"));
+  const text=item.audio.replace(/^(여자|남자):\s*/gm,"").trim();
+  const rate=parseFloat(document.getElementById("speedSelect").value||"0.9");
+  const neuralReady=speakKorean(text,rate,{cacheTag:"listen-v2",allowNativeFallback:false});
+  if(!neuralReady){
+    const note=document.querySelector(".listen-note");
+    if(note){
+      const original=note.textContent;
+      note.textContent="AI音声を生成中です。端末の機械音声は使わない設定にしました。少し待ってからもう一度お試しください。";
+      setTimeout(()=>{if(note.textContent.startsWith("AI音声を生成中"))note.textContent=original},4000);
+    }
+  }
 }
 
 
@@ -2304,7 +2321,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1530",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1540",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
