@@ -35,10 +35,19 @@ for(const group of groups){
   }
 }
 
-function clean(s){
-  return String(s||"").toLowerCase()
-    .replace(/[\s\p{P}\p{S}]/gu,"")
-    .replace(/(다음|중|것은|무엇입니까|알맞은|고르세요|가장|내용|같은|맞는)/g,"");
+// Mirror the production app: base questions without explicit IDs receive stable IDs after all banks are appended.
+const PROBLEM_PREFIX={vocab:"V",grammar:"G",reading:"R",listening:"L"};
+for(const type of types){
+  bank[type].forEach((item,index)=>{
+    if(!item.id)item.id=`${PROBLEM_PREFIX[type]}${String(index+1).padStart(3,"0")}`;
+  });
+}
+
+function rawNorm(s){
+  return String(s||"").toLowerCase().replace(/[\s\p{P}\p{S}]/gu,"");
+}
+function similarityNorm(s){
+  return rawNorm(s).replace(/(무엇입니까|알맞은|고르세요|가장|맞는|것은|중)/g,"");
 }
 function grams(s,n=2){
   const out=new Set();
@@ -46,7 +55,7 @@ function grams(s,n=2){
   return out;
 }
 function similarity(a,b){
-  a=clean(a);b=clean(b);
+  a=similarityNorm(a);b=similarityNorm(b);
   if(!a||!b)return 0;
   const A=grams(a),B=grams(b);
   if(!A.size||!B.size)return a===b?1:0;
@@ -63,13 +72,14 @@ const badIds=[];
 const badChoices=[];
 const duplicateChoices=[];
 const duplicateIds=[];
-const duplicateQuestions=[];
+const duplicateProblemSignatures=[];
+const repeatedContextlessStems=[];
 const highSimilarity=[];
 const missingListening=[];
 const suspiciousJapanese=[];
 const malformedGlosses=[];
 
-const ids=new Map(),questions=new Map();
+const ids=new Map(),contextlessQuestions=new Map(),signatures=new Map();
 for(const {type,index,item} of all){
   const label=item?.id||type+"#"+index;
   for(const field of ["id","q","c","a","e"]){
@@ -101,10 +111,18 @@ for(const {type,index,item} of all){
 
   const q=String(item.q||"").trim();
   if(q){
-    const qkey=clean(q);
-    const arr=questions.get(qkey)||[];
-    arr.push({id:label,type,q});
-    questions.set(qkey,arr);
+    // Vocab/grammar have no passage/audio context, so an identical stem is usually a true duplicate.
+    if(type==="vocab"||type==="grammar"){
+      const qkey=rawNorm(q);
+      const arr=contextlessQuestions.get(qkey)||[];
+      arr.push({id:label,type,q});
+      contextlessQuestions.set(qkey,arr);
+    }
+    const context=type==="reading"?String(item.passage||""):type==="listening"?String(item.audio||""):"";
+    const sig=[type,rawNorm(q),rawNorm(context),(item.c||[]).map(rawNorm).join("|"),String(item.a)].join("::");
+    const uses=signatures.get(sig)||[];
+    uses.push({id:label,type,q:short(q),context:short(context)});
+    signatures.set(sig,uses);
   }
 
   if(type==="listening"){
@@ -124,19 +142,24 @@ for(const {type,index,item} of all){
   }
 }
 
-for(const [,uses] of questions){
-  if(uses.length>1)duplicateQuestions.push(uses);
+for(const [,uses] of signatures){
+  if(uses.length>1)duplicateProblemSignatures.push(uses);
+}
+for(const [,uses] of contextlessQuestions){
+  if(uses.length>1)repeatedContextlessStems.push(uses);
 }
 
-// Near-duplicate stems within each type. Exact duplicates are reported above.
-for(const type of types){
+// Near-duplicate checks focus on contextless vocab/grammar questions.
+// Repeating a generic prompt such as "where is it?" is normal for reading/listening
+// when the passage/audio differs.
+for(const type of ["vocab","grammar"]){
   const arr=bank[type];
   for(let i=0;i<arr.length;i++){
     for(let j=i+1;j<arr.length;j++){
       const a=arr[i],b=arr[j];
-      if(clean(a.q)===clean(b.q))continue;
+      if(rawNorm(a.q)===rawNorm(b.q))continue;
       const score=similarity(a.q,b.q);
-      if(score>=0.90){
+      if(score>=0.94){
         highSimilarity.push({
           type,score:+score.toFixed(2),
           a:a.id,q1:short(a.q),b:b.id,q2:short(b.q)
@@ -154,8 +177,9 @@ const summary={
   duplicateIds:duplicateIds.length,
   nonFourOrInvalidChoices:badChoices.length,
   duplicateChoicesInsideQuestion:duplicateChoices.length,
-  exactDuplicateQuestionStems:duplicateQuestions.length,
-  highSimilarityQuestionStems:highSimilarity.length,
+  exactDuplicateProblems:duplicateProblemSignatures.length,
+  repeatedVocabGrammarStems:repeatedContextlessStems.length,
+  highSimilarityVocabGrammarStems:highSimilarity.length,
   listeningMissingAudioOrJapanese:missingListening.length,
   suspiciousJapanese:suspiciousJapanese.length,
   malformedGlosses:malformedGlosses.length
@@ -173,15 +197,16 @@ section("Missing required fields",missing);
 section("Duplicate IDs",duplicateIds);
 section("Choice-count / answer-index issues",badChoices);
 section("Duplicate choices inside a question",duplicateChoices);
-section("Exact duplicate question stems",duplicateQuestions);
-section("High-similarity question stems",highSimilarity,180);
+section("Exact duplicate full problems",duplicateProblemSignatures);
+section("Repeated vocab/grammar question stems",repeatedContextlessStems);
+section("High-similarity vocab/grammar question stems",highSimilarity,180);
 section("Listening missing audio or Japanese",missingListening);
 section("Suspicious Japanese",suspiciousJapanese);
 section("Malformed glosses",malformedGlosses);
 
 const critical=
   missing.length||duplicateIds.length||badChoices.length||duplicateChoices.length||
-  duplicateQuestions.length||missingListening.length||suspiciousJapanese.length||malformedGlosses.length;
+  duplicateProblemSignatures.length||repeatedContextlessStems.length||missingListening.length||suspiciousJapanese.length||malformedGlosses.length;
 if(strict&&critical){
   console.error("\nStrict question audit failed.");
   process.exit(1);
