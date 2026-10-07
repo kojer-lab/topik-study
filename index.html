@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.15.1</title>
+<title>TOPIK I · 2級 Study v1.15.2</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -1902,9 +1902,13 @@ function revealVocabAnswer(){
 }
 
 function requeueCurrentWord(word,positions){
-  const at=Math.min(Math.max(1,positions),vocabReviewQueue.length);
-  vocabReviewQueue.splice(at,0,word);
+  const distance=Math.max(1,Number(positions)||1);
+  // If there are not enough other cards left, do not show the same card
+  // again immediately. Its dueAt timestamp will bring it back later.
+  if(vocabReviewQueue.length<distance)return false;
+  vocabReviewQueue.splice(distance,0,word);
   vocabReviewTotal++;
+  return true;
 }
 function rateVocabCard(rating){
   if(!vocabReviewCurrent)return;
@@ -2283,7 +2287,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1510",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1520",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
