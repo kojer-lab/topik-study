@@ -33,6 +33,10 @@ on:
       - 'questions-training-01.js'
       - 'questions-exam.js'
       - 'questions-extra.js'
+      - 'vocab-catalog.js'
+      - 'vocab-essential.js'
+      - 'vocab-examples-*.js'
+      - 'vocab-upper-batch-*.js'
 
 permissions:
   contents: write
