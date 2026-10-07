@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.15</title>
+<title>TOPIK I · 2級 Study v1.15.1</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -467,6 +467,23 @@ main{
   body{border-left:1px solid var(--line);border-right:1px solid var(--line)}
 }
 
+/* Compact, accessible audio controls directly beside the text they read. */
+.srs-word-line{display:flex;align-items:center;justify-content:center;gap:8px;max-width:100%;min-width:0}
+.srs-word-line .srs-front-word{min-width:0;overflow-wrap:anywhere}
+.vocab-word-line{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.vocab-word-line .vocab-word{min-width:0;overflow-wrap:anywhere}
+.vocab-ko-audio-line{display:flex;align-items:flex-start;gap:6px;min-width:0}
+.vocab-ko-audio-line>.ko{flex:1;min-width:0;overflow-wrap:anywhere}
+.inline-audio-btn{
+  display:inline-flex;align-items:center;justify-content:center;flex:0 0 44px;
+  width:44px;min-width:44px;height:44px;min-height:44px;padding:0;
+  border:1px solid var(--line);border-radius:12px;background:var(--panel);
+  color:var(--text);font-size:19px;line-height:1;cursor:pointer;
+  -webkit-tap-highlight-color:transparent;touch-action:manipulation
+}
+.inline-audio-btn:active{background:var(--accent2);transform:scale(.96)}
+.inline-audio-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+@media(max-width:380px){.srs-front-word{font-size:32px}.vocab-word{font-size:23px}}
 </style>
 </head>
 <body>
@@ -711,10 +728,12 @@ main{
       <div class="srs-progress" id="srsReviewProgress"></div>
     </div>
     <div class="srs-card" id="srsCard">
-      <div class="srs-front-word" id="srsWord"></div>
+      <div class="srs-word-line" id="srsWordRow">
+        <div class="srs-front-word" id="srsWord"></div>
+        <button type="button" class="inline-audio-btn" id="srsSpeakFront" aria-label="単語の発音を聞く" title="単語の発音を聞く">🔊</button>
+      </div>
       <div class="srs-card-meta" id="srsCardMeta"></div>
       <div class="srs-front-hint">意味を思い出してから答えを見てください。</div>
-      <button class="secondary" id="srsSpeakFront" style="margin-top:14px">🔊 発音を聞く</button>
       <button class="primary srs-reveal" id="srsReveal">答えを見る</button>
 
       <div class="srs-back hidden" id="srsBack">
@@ -722,18 +741,19 @@ main{
         <div class="pron" id="srsPron"></div>
         <div class="example">
           <div class="example-tag">例文 1</div>
-          <div class="ko" id="srsSentence"></div>
+          <div class="vocab-ko-audio-line">
+            <div class="ko" id="srsSentence"></div>
+            <button type="button" class="inline-audio-btn" id="srsSpeakSentence" aria-label="例文1を聞く" title="例文1を聞く">🔊</button>
+          </div>
           <div class="jp" id="srsSentenceJp"></div>
         </div>
         <div class="example hidden" id="srsExample2">
           <div class="example-tag">例文 2</div>
-          <div class="ko" id="srsSentence2"></div>
+          <div class="vocab-ko-audio-line">
+            <div class="ko" id="srsSentence2"></div>
+            <button type="button" class="inline-audio-btn" id="srsSpeakSentence2" aria-label="例文2を聞く" title="例文2を聞く">🔊</button>
+          </div>
           <div class="jp" id="srsSentenceJp2"></div>
-        </div>
-        <div class="srs-audio" id="srsAudioRow">
-          <button class="secondary" id="srsSpeakWord">🔊 単語</button>
-          <button class="secondary" id="srsSpeakSentence">🔊 例文1</button>
-          <button class="secondary hidden" id="srsSpeakSentence2">🔊 例文2</button>
         </div>
         <div class="srs-ratings">
           <button class="srs-rate again" data-srs-rate="again">もう一度<span id="srsAgainWhen">1分</span></button>
@@ -1832,6 +1852,7 @@ function showNextVocabCard(){
     vocabReviewCurrent=null;
     document.getElementById("srsReviewProgress").textContent=`${vocabReviewDone} / ${vocabReviewTotal}`;
     document.getElementById("srsWord").classList.add("hidden");
+    document.getElementById("srsWordRow").classList.add("hidden");
     document.getElementById("srsCardMeta").classList.add("hidden");
     document.querySelector(".srs-front-hint").classList.add("hidden");
     document.getElementById("srsSpeakFront").classList.add("hidden");
@@ -1843,6 +1864,7 @@ function showNextVocabCard(){
   vocabReviewCurrent=vocabReviewQueue[0];
   document.getElementById("srsFinished").classList.add("hidden");
   document.getElementById("srsWord").classList.remove("hidden");
+  document.getElementById("srsWordRow").classList.remove("hidden");
   document.getElementById("srsCardMeta").classList.remove("hidden");
   document.querySelector(".srs-front-hint").classList.remove("hidden");
   document.getElementById("srsSpeakFront").classList.remove("hidden");
@@ -1859,8 +1881,6 @@ function showNextVocabCard(){
   document.getElementById("srsSentence2").textContent=w.sentence2||"";
   document.getElementById("srsSentenceJp2").textContent=w.sentenceJp2||"";
   document.getElementById("srsExample2").classList.toggle("hidden",!hasSecondExample);
-  document.getElementById("srsSpeakSentence2").classList.toggle("hidden",!hasSecondExample);
-  document.getElementById("srsAudioRow").classList.toggle("three",hasSecondExample);
   document.getElementById("srsAgainWhen").textContent=fmtWait(ints.again);
   document.getElementById("srsHardWhen").textContent=fmtWait(ints.hard);
   document.getElementById("srsGoodWhen").textContent=fmtWait(ints.good);
@@ -2070,9 +2090,8 @@ function renderWordbook(){
     const saved=savedSet.has(w.word);
     const state=s.vocabSrs?.[w.id];
     const badges=[];
-    const secondExampleHTML=w.sentence2?'<div class="vocab-example"><div class="example-tag">例文 2</div><div class="ko">'+esc(w.sentence2)+'</div><div class="jp">'+esc(w.sentenceJp2||"")+'</div></div>':"";
+    const secondExampleHTML=w.sentence2?'<div class="vocab-example"><div class="example-tag">例文 2</div><div class="vocab-ko-audio-line"><div class="ko">'+esc(w.sentence2)+'</div><button type="button" class="inline-audio-btn" data-vspeak-sentence2="'+esc(w.id)+'" aria-label="例文2を聞く" title="例文2を聞く">🔊</button></div><div class="jp">'+esc(w.sentenceJp2||"")+'</div></div>':"";
     const pronHTML=(w.pron&&w.pron!==w.word)?'<div class="vocab-pron">発音メモ ['+esc(w.pron)+']</div>':'';
-    const secondAudioHTML=w.sentence2?'<button class="secondary" data-vspeak-sentence2="'+esc(w.id)+'">🔊 例文2</button>':"";
     if(state?.suspended)badges.push('<span class="srs-badge suspended">⏸ 保留</span>');
     if(state?.manualMastered||state?.status==="mastered")badges.push('<span class="srs-badge mastered">✓ 定着</span>');
     if(isVocabDifficult(state))badges.push('<span class="srs-badge difficult">🔥 苦手</span>');
@@ -2081,7 +2100,7 @@ function renderWordbook(){
     div.innerHTML=`
       <div class="vocab-head">
         <div>
-          <div class="vocab-word">${esc(w.word)}</div>
+          <div class="vocab-word-line"><div class="vocab-word">${esc(w.word)}</div><button type="button" class="inline-audio-btn" data-vspeak-word="${esc(w.id)}" aria-label="単語の発音を聞く" title="単語の発音を聞く">🔊</button></div>
           <div class="vocab-meaning">${esc(w.meaning)}</div>
           ${pronHTML}
           <div class="vocab-tier-badge">${esc(vocabTier(w).label)}</div>
@@ -2091,16 +2110,14 @@ function renderWordbook(){
       </div>
       <div class="vocab-example">
         <div class="example-tag">例文 1</div>
-        <div class="ko">${esc(w.sentence)}</div>
+        <div class="vocab-ko-audio-line">
+          <div class="ko">${esc(w.sentence)}</div>
+          <button type="button" class="inline-audio-btn" data-vspeak-sentence="${esc(w.id)}" aria-label="例文1を聞く" title="例文1を聞く">🔊</button>
+        </div>
         <div class="jp">${esc(w.sentenceJp)}</div>
       </div>
       ${secondExampleHTML}
-      <div class="vocab-actions">
-        <button class="secondary" data-vspeak-word="${esc(w.id)}">🔊 単語</button>
-        <button class="secondary" data-vspeak-sentence="${esc(w.id)}">🔊 例文1</button>
-        ${secondAudioHTML}
-        ${state?.suspended||state?.manualMastered?'<button class="secondary" data-vresume="'+esc(w.id)+'">↩ 復習へ戻す</button>':""}
-      </div>`;
+      ${state?.suspended||state?.manualMastered?'<div class="vocab-actions"><button class="secondary" data-vresume="'+esc(w.id)+'">↩ 復習へ戻す</button></div>':""}`;
     box.appendChild(div);
   });
 
@@ -2174,7 +2191,6 @@ document.getElementById("exitVocabReview").onclick=exitVocabSrs;
 document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
 document.getElementById("srsReveal").onclick=revealVocabAnswer;
 document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
-document.getElementById("srsSpeakWord").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,0.82)};
 document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,0.86)};
 document.getElementById("srsSpeakSentence2").onclick=()=>{if(vocabReviewCurrent?.sentence2)speakKorean(vocabReviewCurrent.sentence2,0.86)};
 document.getElementById("srsSuspend").onclick=suspendVocabCurrent;
@@ -2267,7 +2283,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1500",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1510",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
