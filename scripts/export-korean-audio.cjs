@@ -36,6 +36,14 @@ function addUtterance(record){
   if(existing && existing.text!==record.text)throw new Error('Audio hash collision: '+record.key);
   if(!existing)utterances.set(record.key,record);
 }
+function isSpeakableGloss(text){
+  // Grammar notation such as "-(으)ㄴ 지" is useful on screen but is not a
+  // lexical pronunciation target and MeloTTS can choke on isolated Hangul jamo.
+  return !!text &&
+    !/^[\-~]/.test(text) &&
+    !/[()\/]/.test(text) &&
+    !/[\u3131-\u318e]/.test(text);
+}
 
 // Listening clips are intentionally added BEFORE vocabulary so the next
 // synthesis batch upgrades all TOPIK listening questions first.
@@ -80,7 +88,7 @@ for(const bank of questionBanks){
     for(const item of (bank[type]||[])){
       for(const g of (item.v||[])){
         const text=String(Array.isArray(g)?g[0]:"").trim();
-        if(text)addUtterance({key:hash(text),text,kind:'gloss'});
+        if(isSpeakableGloss(text))addUtterance({key:hash(text),text,kind:'gloss'});
       }
     }
   }
