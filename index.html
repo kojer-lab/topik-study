@@ -295,7 +295,12 @@ h1{font-size:30px;margin:0}
   margin-top:16px;padding:14px;border-radius:14px;background:var(--accent2);text-align:left
 }
 .srs-back .example .ko{font-size:17px;font-weight:800;line-height:1.65}
-.srs-back .example .jp{margin-top:6px;color:var(--muted);font-size:13px;line-height:1.55}
+.srs-back .example .jp{margin-top:8px;color:var(--muted);font-size:13px;line-height:1.55}
+.srs-jp-toggle{
+  margin-top:10px;border:0;background:transparent;color:var(--accent);padding:0;
+  font-size:12px;font-weight:800;cursor:pointer;text-align:left
+}
+.srs-jp-toggle:active{opacity:.65}
 .srs-audio{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
 .srs-audio button{min-height:43px}
 .srs-ratings{display:grid;grid-template-columns:repeat(4,1fr);gap:7px;margin-top:14px}
@@ -761,7 +766,8 @@ main{
             <div class="ko" id="srsSentence"></div>
             <button type="button" class="inline-audio-btn" id="srsSpeakSentence" aria-label="例文1を聞く" title="例文1を聞く">🔊</button>
           </div>
-          <div class="jp" id="srsSentenceJp"></div>
+          <button type="button" class="srs-jp-toggle" id="srsToggleJp1">日本語訳を見る</button>
+          <div class="jp hidden" id="srsSentenceJp"></div>
         </div>
         <div class="example hidden" id="srsExample2">
           <div class="example-tag">例文 2</div>
@@ -769,7 +775,8 @@ main{
             <div class="ko" id="srsSentence2"></div>
             <button type="button" class="inline-audio-btn" id="srsSpeakSentence2" aria-label="例文2を聞く" title="例文2を聞く">🔊</button>
           </div>
-          <div class="jp" id="srsSentenceJp2"></div>
+          <button type="button" class="srs-jp-toggle" id="srsToggleJp2">日本語訳を見る</button>
+          <div class="jp hidden" id="srsSentenceJp2"></div>
         </div>
         <div class="srs-ratings">
           <button class="srs-rate again" data-srs-rate="again">もう一度<span id="srsAgainWhen">1分</span></button>
@@ -1860,9 +1867,13 @@ function showNextVocabCard(){
   document.getElementById("srsPron").textContent=(w.pron&&w.pron!==w.word)?`発音メモ [${w.pron}]`:"🔊で発音を聞けます";
   document.getElementById("srsSentence").textContent=w.sentence;
   document.getElementById("srsSentenceJp").textContent=w.sentenceJp;
+  document.getElementById("srsSentenceJp").classList.add("hidden");
+  document.getElementById("srsToggleJp1").textContent="日本語訳を見る";
   const hasSecondExample=!!(w.sentence2&&w.sentenceJp2);
   document.getElementById("srsSentence2").textContent=w.sentence2||"";
   document.getElementById("srsSentenceJp2").textContent=w.sentenceJp2||"";
+  document.getElementById("srsSentenceJp2").classList.add("hidden");
+  document.getElementById("srsToggleJp2").textContent="日本語訳を見る";
   document.getElementById("srsExample2").classList.toggle("hidden",!hasSecondExample);
   document.getElementById("srsAgainWhen").textContent=fmtWait(ints.again);
   document.getElementById("srsHardWhen").textContent=fmtWait(ints.hard);
@@ -2177,6 +2188,16 @@ document.getElementById("startVocabReview").onclick=startVocabSrs;
 document.getElementById("exitVocabReview").onclick=exitVocabSrs;
 document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
 document.getElementById("srsReveal").onclick=revealVocabAnswer;
+function toggleSrsExampleTranslation(jpId,buttonId){
+  const jp=document.getElementById(jpId);
+  const btn=document.getElementById(buttonId);
+  if(!jp||!btn)return;
+  const willShow=jp.classList.contains("hidden");
+  jp.classList.toggle("hidden",!willShow);
+  btn.textContent=willShow?"日本語訳を隠す":"日本語訳を見る";
+}
+document.getElementById("srsToggleJp1").onclick=()=>toggleSrsExampleTranslation("srsSentenceJp","srsToggleJp1");
+document.getElementById("srsToggleJp2").onclick=()=>toggleSrsExampleTranslation("srsSentenceJp2","srsToggleJp2");
 document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,1,{cacheTag:"vocab-v1",allowNativeFallback:false})};
 document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,1,{cacheTag:"vocab-v1",allowNativeFallback:false})};
 document.getElementById("srsSpeakSentence2").onclick=()=>{if(vocabReviewCurrent?.sentence2)speakKorean(vocabReviewCurrent.sentence2,1,{cacheTag:"vocab-v1",allowNativeFallback:false})};
@@ -2270,7 +2291,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1590",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1600",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
