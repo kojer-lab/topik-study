@@ -19,6 +19,10 @@ on:
         description: Exclusive listening item index
         required: true
         default: '10'
+      auto_expand:
+        description: Continue in resumable batches until full audio corpus is ready
+        required: true
+        default: 'false'
   push:
     paths:
       - '.github/workflows/korean-neural-audio.yml'
@@ -26,6 +30,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
   pages: write
 
 concurrency:
@@ -58,12 +63,12 @@ jobs:
       - name: Export study texts
         env:
           START: ${{ github.event.inputs.start || '1' }}
-          END: ${{ github.event.inputs.end || '20' }}
+          END: ${{ github.event_name == 'push' && '1500' || github.event.inputs.end || '20' }}
           LISTENING_START: ${{ github.event.inputs.listening_start || '0' }}
-          LISTENING_END: ${{ github.event.inputs.listening_end || '10' }}
+          LISTENING_END: ${{ github.event_name == 'push' && '230' || github.event.inputs.listening_end || '10' }}
         run: node scripts/export-korean-audio.cjs "$START" "$END" "$LISTENING_START" "$LISTENING_END"
       - name: Synthesize neural Korean audio
-        run: python scripts/generate-korean-audio.py
+        run: python scripts/generate-korean-audio.py --max-new 400
       - name: Commit audio and manifest
         run: |
           git config user.name "github-actions[bot]"
@@ -86,3 +91,17 @@ jobs:
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds" \
             || echo "GitHub Pages rebuild requires a later authorized deployment."
+
+      - name: Continue remaining audio in next automatic batch
+        if: ${{ success() && env.TOPIK_AUDIO_REMAINING != '0' && (github.event_name == 'push' || github.event.inputs.auto_expand == 'true') }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo "Remaining audio clips: $TOPIK_AUDIO_REMAINING"
+          curl -fsS -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            -H "X-GitHub-Api-Version: 2022-11-28" \
+            -H "Content-Type: application/json" \
+            -d '{"ref":"main","inputs":{"start":"1","end":"1500","listening_start":"0","listening_end":"230","auto_expand":"true"}}' \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/actions/workflows/korean-neural-audio.yml/dispatches"
