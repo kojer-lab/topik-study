@@ -142,6 +142,8 @@ h1{font-size:30px;margin:0}
   border:0;background:var(--accent);color:white;padding:10px 14px;border-radius:10px;
   font-weight:800;cursor:pointer
 }
+.listen-pause-btn{background:var(--panel);color:var(--text);border:1px solid var(--line)}
+.listen-btn:disabled{opacity:.45;cursor:default}
 .speed{
   border:1px solid var(--line);background:var(--panel);color:var(--text);
   border-radius:10px;padding:9px 10px
@@ -605,6 +607,7 @@ main{
       <div id="listenBox" class="listenbox">
         <div class="listen-controls">
           <button class="listen-btn" id="playBtn">▶ 聞く</button>
+          <button class="listen-btn listen-pause-btn" id="pauseBtn" disabled>⏸ 一時停止</button>
           <select class="speed" id="speedSelect" aria-label="再生速度">
             <option value="0.75">0.75×</option>
             <option value="0.9">0.9×</option>
@@ -1372,6 +1375,20 @@ function answer(idx){
 // Neural clips are synthesized on GitHub Actions, then served by GitHub Pages.
 // Tapping audio stays synchronous on iPhone Safari; unsupported clips use native speech.
 let activeNeuralAudio=null;
+function setListeningPauseState(state="idle"){
+  const btn=document.getElementById("pauseBtn");
+  if(!btn)return;
+  if(state==="playing"){
+    btn.disabled=false;
+    btn.textContent="⏸ 一時停止";
+  }else if(state==="paused"){
+    btn.disabled=false;
+    btn.textContent="▶ 再開";
+  }else{
+    btn.disabled=true;
+    btn.textContent="⏸ 一時停止";
+  }
+}
 function koreanAudioHash(text){
   let h=2166136261;
   text=String(text).trim();
@@ -1385,6 +1402,7 @@ function stopKoreanAudio(){
     activeNeuralAudio.load();
     activeNeuralAudio=null;
   }
+  setListeningPauseState("idle");
   if("speechSynthesis" in window)window.speechSynthesis.cancel();
 }
 function nativeKoreanSpeech(text,rate){
@@ -1413,17 +1431,24 @@ function speakKorean(text,rate=1,options={}){
     const audio=new Audio("./tts/ko/"+key+".mp3"+cacheTag);
     activeNeuralAudio=audio;
     audio.preload="auto";
-    audio.playbackRate=Math.max(0.6,Math.min(1.4,Number(rate)||0.9));
-    audio.onended=()=>{if(activeNeuralAudio===audio)activeNeuralAudio=null};
+    audio.playbackRate=Math.max(0.6,Math.min(1.4,Number(rate)||1));
+    audio.onended=()=>{
+      if(activeNeuralAudio===audio)activeNeuralAudio=null;
+      if(options.enablePauseControl)setListeningPauseState("idle");
+    };
     audio.onerror=()=>{
       if(activeNeuralAudio===audio){
         activeNeuralAudio=null;
+        if(options.enablePauseControl)setListeningPauseState("idle");
         if(options.allowNativeFallback!==false)nativeKoreanSpeech(text,rate);
       }
     };
-    audio.play().catch(()=>{
+    audio.play().then(()=>{
+      if(options.enablePauseControl)setListeningPauseState("playing");
+    }).catch(()=>{
       if(activeNeuralAudio===audio){
         activeNeuralAudio=null;
+        if(options.enablePauseControl)setListeningPauseState("idle");
         if(options.allowNativeFallback!==false)nativeKoreanSpeech(text,rate);
       }
     });
@@ -1437,7 +1462,7 @@ function playCurrent(){
   const item=getCurrentRef().item;
   const text=item.audio.replace(/^(여자|남자):\s*/gm,"").trim();
   const rate=parseFloat(document.getElementById("speedSelect").value||"1");
-  const neuralReady=speakKorean(text,rate,{cacheTag:"listen-v2",allowNativeFallback:false});
+  const neuralReady=speakKorean(text,rate,{cacheTag:"listen-v2",allowNativeFallback:false,enablePauseControl:true});
   if(!neuralReady){
     const note=document.querySelector(".listen-note");
     if(note){
@@ -1448,6 +1473,15 @@ function playCurrent(){
   }
 }
 
+function toggleListeningPause(){
+  if(!activeNeuralAudio)return;
+  if(activeNeuralAudio.paused){
+    activeNeuralAudio.play().then(()=>setListeningPauseState("playing")).catch(()=>setListeningPauseState("idle"));
+  }else{
+    activeNeuralAudio.pause();
+    setListeningPauseState("paused");
+  }
+}
 
 const hintBtn=document.getElementById("hintBtn");
 const hintBox=document.getElementById("hintBox");
@@ -1460,6 +1494,7 @@ function setQuizMode(mode){
 hintBtn.onclick=()=>hintBox.classList.toggle("show");
 
 document.getElementById("playBtn").onclick=playCurrent;
+document.getElementById("pauseBtn").onclick=toggleListeningPause;
 document.getElementById("nextBtn").onclick=()=>{
   stopKoreanAudio();
   const total=sessionItems?sessionItems.length:data[currentType].length;
