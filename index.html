@@ -1021,11 +1021,43 @@ function shuffledIndexes(n){
   return a;
 }
 
+function listeningAudioKey(index){
+  return String(data.listening[index]?.audio||"").trim();
+}
+function shuffledListeningIndexesUniqueFirst(){
+  const groups=new Map();
+  data.listening.forEach((item,index)=>{
+    const key=String(item.audio||"").trim()||("__"+index);
+    if(!groups.has(key))groups.set(key,[]);
+    groups.get(key).push(index);
+  });
+  const groupKeys=[...groups.keys()];
+  for(let i=groupKeys.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [groupKeys[i],groupKeys[j]]=[groupKeys[j],groupKeys[i]];
+  }
+  const firstPass=[],later=[];
+  groupKeys.forEach(key=>{
+    const indexes=[...groups.get(key)];
+    for(let i=indexes.length-1;i>0;i--){
+      const j=Math.floor(Math.random()*(i+1));
+      [indexes[i],indexes[j]]=[indexes[j],indexes[i]];
+    }
+    firstPass.push(indexes[0]);
+    later.push(...indexes.slice(1));
+  });
+  for(let i=later.length-1;i>0;i--){
+    const j=Math.floor(Math.random()*(i+1));
+    [later[i],later[j]]=[later[j],later[i]];
+  }
+  return [...firstPass,...later];
+}
+
 function startQuiz(type){
   currentType=type;
   sessionItems=null;
   sessionKind="single";
-  order=shuffledIndexes(data[type].length);
+  order=type==="listening"?shuffledListeningIndexesUniqueFirst():shuffledIndexes(data[type].length);
   currentIndex=0;
   mockAnswers=[];
   renderQuestion();
@@ -1034,7 +1066,8 @@ function startQuiz(type){
 function makeMixedSession(counts){
   const items=[];
   for(const [type,count] of Object.entries(counts)){
-    const idxs=shuffledIndexes(data[type].length).slice(0,Math.min(count,data[type].length));
+    const sourceIndexes=type==="listening"?shuffledListeningIndexesUniqueFirst():shuffledIndexes(data[type].length);
+    const idxs=sourceIndexes.slice(0,Math.min(count,data[type].length));
     idxs.forEach(index=>items.push({type,index}));
   }
   // mix categories too
@@ -1075,8 +1108,16 @@ function getDailyPlan(){
     if(refs.length===saved.length)return refs;
   }
 
-  const all=allProblemRefs(),selected=[],used=new Set();
-  const add=(ref)=>{if(ref&&!used.has(ref.id)){used.add(ref.id);selected.push(ref)}};
+  const all=allProblemRefs(),selected=[],used=new Set(),usedListeningAudio=new Set();
+  const add=(ref)=>{
+    if(!ref||used.has(ref.id))return;
+    if(ref.type==="listening"){
+      const key=listeningAudioKey(ref.index);
+      if(key&&usedListeningAudio.has(key))return;
+      if(key)usedListeningAudio.add(key);
+    }
+    used.add(ref.id);selected.push(ref);
+  };
 
   // 1) 間違いを最大2問
   seededShuffle(
@@ -1159,7 +1200,7 @@ function startMockTimer(minutes=100){
 }
 function startMockExam(){
   setQuizMode("test");
-  const listening=shuffledIndexes(data.listening.length).slice(0,30).map(index=>({type:"listening",index}));
+  const listening=shuffledListeningIndexesUniqueFirst().slice(0,30).map(index=>({type:"listening",index}));
   const reading=shuffledIndexes(data.reading.length).slice(0,40).map(index=>({type:"reading",index}));
   sessionItems=[...listening,...reading];
   sessionKind="mock";
