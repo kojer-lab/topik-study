@@ -11,12 +11,22 @@ on:
         description: Last vocabulary number (1-1500)
         required: true
         default: '20'
+      listening_start:
+        description: First listening item index, zero-based
+        required: true
+        default: '0'
+      listening_end:
+        description: Exclusive listening item index
+        required: true
+        default: '10'
   push:
     paths:
       - '.github/workflows/korean-neural-audio.yml'
+      - 'scripts/export-korean-audio.cjs'
 
 permissions:
   contents: write
+  pages: write
 
 concurrency:
   group: korean-neural-audio
@@ -42,7 +52,9 @@ jobs:
         env:
           START: ${{ github.event.inputs.start || '1' }}
           END: ${{ github.event.inputs.end || '20' }}
-        run: node scripts/export-korean-audio.cjs "$START" "$END"
+          LISTENING_START: ${{ github.event.inputs.listening_start || '0' }}
+          LISTENING_END: ${{ github.event.inputs.listening_end || '10' }}
+        run: node scripts/export-korean-audio.cjs "$START" "$END" "$LISTENING_START" "$LISTENING_END"
       - name: Synthesize neural Korean audio
         run: python scripts/generate-korean-audio.py
       - name: Commit audio and manifest
@@ -56,3 +68,14 @@ jobs:
             git commit -m "Add Korean MeloTTS neural audio"
             git push
           fi
+
+      - name: Request GitHub Pages rebuild for generated clips
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          curl -sS -f -X POST \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/pages/builds" \
+            || echo "GitHub Pages rebuild requires a later authorized deployment."
