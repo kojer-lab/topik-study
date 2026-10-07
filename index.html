@@ -1341,7 +1341,7 @@ function answer(idx){
     btn.onclick=(ev)=>{
       ev.stopPropagation();
       const g=(item.v||[])[Number(btn.dataset.glossSpeak)];
-      if(g?.[0])speakKorean(g[0],1);
+      if(g?.[0])speakKorean(g[0],1,{cacheTag:"vocab-v1",allowNativeFallback:false});
     };
   });
   exp.querySelectorAll("[data-star]").forEach(btn=>{
@@ -2068,13 +2068,13 @@ function renderWordbook(){
     toggleFavoriteEntry(w);renderWordbook();
   });
   box.querySelectorAll("[data-vspeak-word]").forEach(btn=>btn.onclick=()=>{
-    const w=catalog.find(x=>x.id===btn.dataset.vspeakWord);if(w)speakKorean(w.word,1);
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakWord);if(w)speakKorean(w.word,1,{cacheTag:"vocab-v1",allowNativeFallback:false});
   });
   box.querySelectorAll("[data-vspeak-sentence]").forEach(btn=>btn.onclick=()=>{
-    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence);if(w)speakKorean(w.sentence,1);
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence);if(w)speakKorean(w.sentence,1,{cacheTag:"vocab-v1",allowNativeFallback:false});
   });
   box.querySelectorAll("[data-vspeak-sentence2]").forEach(btn=>btn.onclick=()=>{
-    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence2);if(w?.sentence2)speakKorean(w.sentence2,1);
+    const w=catalog.find(x=>x.id===btn.dataset.vspeakSentence2);if(w?.sentence2)speakKorean(w.sentence2,1,{cacheTag:"vocab-v1",allowNativeFallback:false});
   });
   box.querySelectorAll("[data-vresume]").forEach(btn=>btn.onclick=()=>resumeVocabCard(btn.dataset.vresume));
 }
@@ -2132,9 +2132,9 @@ document.getElementById("startVocabReview").onclick=startVocabSrs;
 document.getElementById("exitVocabReview").onclick=exitVocabSrs;
 document.getElementById("srsFinishBtn").onclick=exitVocabSrs;
 document.getElementById("srsReveal").onclick=revealVocabAnswer;
-document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,1)};
-document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,1)};
-document.getElementById("srsSpeakSentence2").onclick=()=>{if(vocabReviewCurrent?.sentence2)speakKorean(vocabReviewCurrent.sentence2,1)};
+document.getElementById("srsSpeakFront").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.word,1,{cacheTag:"vocab-v1",allowNativeFallback:false})};
+document.getElementById("srsSpeakSentence").onclick=()=>{if(vocabReviewCurrent)speakKorean(vocabReviewCurrent.sentence,1,{cacheTag:"vocab-v1",allowNativeFallback:false})};
+document.getElementById("srsSpeakSentence2").onclick=()=>{if(vocabReviewCurrent?.sentence2)speakKorean(vocabReviewCurrent.sentence2,1,{cacheTag:"vocab-v1",allowNativeFallback:false})};
 document.getElementById("srsSuspend").onclick=suspendVocabCurrent;
 document.getElementById("srsMaster").onclick=masterVocabCurrent;
 document.querySelectorAll("[data-srs-rate]").forEach(btn=>btn.onclick=()=>rateVocabCard(btn.dataset.srsRate));
