@@ -12,7 +12,7 @@
 <link rel="manifest" href="./manifest.webmanifest">
 <link rel="apple-touch-icon" href="./apple-touch-icon.png">
 
-<title>TOPIK I · 2級 Study v1.13</title>
+<title>TOPIK I · 2級 Study v1.14</title>
 <style>
 :root{
   --bg:#f5f7fb;--panel:#fff;--text:#172033;--muted:#6b7280;--line:#e6e9ef;
@@ -528,7 +528,7 @@ main{
     <div class="card action" data-start="grammar"><strong>🧩 文法</strong><p>韓国語の文の中で助詞、時制、理由、予定などを練習。</p></div>
     <div class="card action" data-start="reading"><strong>📖 読解</strong><p>TOPIK形式を意識した韓国語の案内・メッセージを読む練習。</p></div>
     <div class="card action" data-start="listening"><strong>🎧 聴解</strong><p>韓国語音声を聞いて韓国語の選択肢から答える練習。</p></div>
-    <div class="card action" id="mockStartCard"><strong>🧪 模擬試験</strong><p>聴解10問＋読解10問。聴解10問の後に読解10問。最後にまとめて採点します。</p></div>
+    <div class="card action" id="mockStartCard"><strong>🧪 模擬試験</strong><p>聴解30問＋読解40問を100分で解き、最後にまとめて採点します。</p></div>
   </div>
 
   <div class="section-title">このバージョン</div>
@@ -538,7 +538,7 @@ main{
       <div class="sub">TOPIK II（3〜6級）ではなく、TOPIK Iの2級を想定した初級学習版です。</div>
       <ul class="feature-list">
         <li>問題・指示・選択肢は韓国語中心</li><li>日本語ヒントは学習モードのみ表示</li>
-        <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li><li><strong>全500問</strong>のオリジナル問題銀行</li>
+        <li>回答直後に正誤判定</li><li>選択肢は毎回ランダムに並び替え</li><li><strong>全800問</strong>のオリジナル問題銀行</li>
         <li>韓国語TTSによる聴解練習</li>
         <li>回答後に台本・日本語訳を表示</li>
         <li>単語をタップすると意味・発音メモを表示</li>
@@ -558,7 +558,7 @@ main{
   </div>
 
   <div class="footer-note">
-    ※ v1.13は1,500語に2つずつの例文を収録。練習問題は学習用のオリジナル問題です。
+    ※ v1.14は1,500語（全語に例文2つ）と全800問の練習問題を収録。模擬試験は練習用の点数換算です。
   </div>
 </section>
 
@@ -816,14 +816,17 @@ main{
 <script src="./vocab-examples-501-600.js?v=1201"></script>
 <script src="./vocab-examples-601-700.js?v=1201"></script>
 <script src="./vocab-examples-701-800.js?v=1201"></script>
-<script src="./vocab-upper-batch-a.js?v=1300"></script>
-<script src="./vocab-upper-batch-b.js?v=1300"></script>
-<script src="./vocab-upper-batch-c.js?v=1300"></script>
-<script src="./vocab-upper-batch-d.js?v=1300"></script>
-<script src="./vocab-upper-batch-e.js?v=1300"></script>
-<script src="./vocab-upper-batch-f.js?v=1300"></script>
-<script src="./vocab-upper-batch-g.js?v=1300"></script>
+<script src="./vocab-upper-batch-a.js?v=1400"></script>
+<script src="./vocab-upper-batch-b.js?v=1400"></script>
+<script src="./vocab-upper-batch-c.js?v=1400"></script>
+<script src="./vocab-upper-batch-d.js?v=1400"></script>
+<script src="./vocab-upper-batch-e.js?v=1400"></script>
+<script src="./vocab-upper-batch-f.js?v=1400"></script>
+<script src="./vocab-upper-batch-g.js?v=1400"></script>
 <script src="./questions-exam.js?v=190"></script>
+<script src="./questions-training-01.js?v=1400"></script>
+<script src="./questions-training-02.js?v=1400"></script>
+<script src="./questions-training-03.js?v=1400"></script>
 <script>
 const data={
 vocab:[
@@ -925,6 +928,13 @@ if(window.EXAM_QUESTIONS){
     if(Array.isArray(window.EXAM_QUESTIONS[type])){
       data[type].push(...window.EXAM_QUESTIONS[type]);
     }
+  }
+}
+
+for(const trainingBank of [window.TRAINING_QUESTIONS_1,window.TRAINING_QUESTIONS_2,window.TRAINING_QUESTIONS_3]){
+  if(!trainingBank)continue;
+  for(const type of ["vocab","grammar","reading","listening"]){
+    if(Array.isArray(trainingBank[type]))data[type].push(...trainingBank[type]);
   }
 }
 
@@ -2214,7 +2224,7 @@ renderHome();
 document.addEventListener("touchstart",()=>{}, {passive:true});
 
 if("serviceWorker" in navigator && (location.protocol==="https:" || location.hostname==="localhost")){
-  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1300",{updateViaCache:"none"}).catch(()=>{}));
+  window.addEventListener("load",()=>navigator.serviceWorker.register("./sw.js?v=1400",{updateViaCache:"none"}).catch(()=>{}));
 }
 
 </script>
