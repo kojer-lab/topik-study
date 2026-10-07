@@ -31,18 +31,14 @@ function hash(text) {
   return (h >>> 0).toString(16).padStart(8,'0') + '-' + text.length;
 }
 const utterances = new Map();
-for (const v of catalog) {
-  const id = Number(v.id.slice(1));
-  if (id < start || id > end) continue;
-  for (const field of ['word','sentence','sentence2']) {
-    const text = String(v[field] || '').trim();
-    if (!text) throw new Error(v.id + ' has empty ' + field);
-    const key = hash(text);
-    if (utterances.has(key) && utterances.get(key) !== text) throw new Error('Audio hash collision: ' + key);
-    utterances.set(key,text);
-  }
+function addUtterance(record){
+  const existing=utterances.get(record.key);
+  if(existing && existing.text!==record.text)throw new Error('Audio hash collision: '+record.key);
+  if(!existing)utterances.set(record.key,record);
 }
-// Optional listening clips use the same normalized text as playCurrent().
+
+// Listening clips are intentionally added BEFORE vocabulary so the next
+// synthesis batch upgrades all TOPIK listening questions first.
 const listeningStart = Math.max(0, parseInt(process.argv[4] || '0', 10));
 const listeningEnd = Math.max(listeningStart, parseInt(process.argv[5] || '10', 10));
 const html = fs.readFileSync('index.html','utf8');
@@ -60,11 +56,24 @@ for (const group of [ctx.window.EXTRA_QUESTIONS,ctx.window.EXAM_QUESTIONS,
 const selectedListening=allListening.slice(listeningStart,listeningEnd);
 for(const item of selectedListening){
   if(!item.audio)continue;
-  const text=String(item.audio).replace(/^(여자|남자):\s*/gm,"").trim();
-  const key=hash(text);
-  if(utterances.has(key)&&utterances.get(key)!==text)throw new Error('Audio hash collision '+key);
-  utterances.set(key,text);
+  const raw=String(item.audio).trim();
+  const text=raw.replace(/^(여자|남자):\s*/gm,"").trim();
+  const segments=raw.split(/\n+/).map(line=>{
+    const m=line.match(/^(여자|남자):\s*(.+)$/);
+    return m?{speaker:m[1]==='여자'?'female':'male',text:m[2].trim()}:{speaker:'neutral',text:line.trim()};
+  }).filter(x=>x.text);
+  addUtterance({key:hash(text),text,kind:'dialogue',segments});
 }
-const output = Array.from(utterances,([key,text])=>({key,text}));
+
+for (const v of catalog) {
+  const id = Number(v.id.slice(1));
+  if (id < start || id > end) continue;
+  for (const field of ['word','sentence','sentence2']) {
+    const text = String(v[field] || '').trim();
+    if (!text) throw new Error(v.id + ' has empty ' + field);
+    addUtterance({key:hash(text),text,kind:'vocab'});
+  }
+}
+const output = Array.from(utterances.values());
 fs.writeFileSync('/tmp/topik-korean-corpus.json',JSON.stringify(output,null,2),'utf8');
 console.log(JSON.stringify({start,end,vocabulary:end-start+1,listening:selectedListening.length,uniqueAudio:output.length}));
