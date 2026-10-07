@@ -100,7 +100,7 @@ for(const {type,index,item} of all){
     if(!Number.isInteger(item.a)||item.a<0||item.a>=item.c.length){
       badChoices.push({id:label,type,answerIndex:item.a,count:item.c.length,q:short(item.q)});
     }
-    const normalized=item.c.map(x=>clean(x));
+    const normalized=item.c.map(x=>rawNorm(x));
     if(new Set(normalized).size!==normalized.length){
       duplicateChoices.push({id:label,type,choices:item.c,q:short(item.q)});
     }
