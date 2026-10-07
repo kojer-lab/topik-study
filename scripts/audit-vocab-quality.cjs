@@ -144,7 +144,7 @@ section("Suspicious Japanese fields",suspiciousJapanese);
 section("Very short examples",unusuallyShort);
 section("Very long examples",unusuallyLong);
 
-const critical = catalog.length!==1500 || missing.length || badIds.length || exactPairs.length;
+const critical = catalog.length!==1500 || missing.length || badIds.length || exactPairs.length || similarPairs.length || duplicateSentences.length || suspiciousJapanese.length;
 if(strict && critical){
   console.error("\nStrict audit failed.");
   process.exit(1);
